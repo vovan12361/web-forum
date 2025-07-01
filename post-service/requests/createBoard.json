@@ -1,0 +1,3 @@
+{
+  "query": "mutation { createBoard(input: { name: \"Тест\", description: \"Это тестовая доска\" }) { id } }"
+}

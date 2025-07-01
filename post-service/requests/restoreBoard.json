@@ -1,0 +1,3 @@
+{
+  "query": "mutation { restoreBoard(id: 7) }"
+}

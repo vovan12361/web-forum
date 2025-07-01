@@ -1,0 +1,11 @@
+{
+  "query": "mutation CreatePost($input: CreatePostInput!) {createPost(input: $input) {id title text}}",
+  "variables": {
+    "input": {
+      "boardId": "1",
+      "title": "a",
+      "text": "a",
+      "hashIp": "localhost"
+    }
+  }
+}

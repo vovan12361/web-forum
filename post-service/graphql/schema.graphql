@@ -1,0 +1,79 @@
+type Board {
+  id: ID!
+  name: String!
+  description: String!
+  createdAt: DateTime!
+  deletedAt: DateTime
+}
+
+type Post {
+  id: ID!
+  boardId: ID!
+  title: String!
+  text: String!
+  hashIp: String!
+  createdAt: DateTime!
+  deletedAt: DateTime
+}
+
+type Comment {
+  id: ID!
+  postId: ID!
+  text: String!
+  hashIp: String!
+  createdAt: DateTime!
+  deletedAt: DateTime
+}
+
+scalar DateTime
+
+input CreateBoardInput {
+  name: String!
+  description: String!
+}
+
+input CreatePostInput {
+  boardId: ID!
+  title: String!
+  text: String!
+  hashIp: String!
+}
+
+input CreateCommentInput {
+  postId: ID!
+  text: String!
+  hashIp: String!
+}
+
+type Query {
+  boards(includeDeleted: Boolean = false): [Board!]!
+  board(id: ID!): Board
+
+  posts(
+    boardId: ID!
+    includeDeleted: Boolean = false
+    limit: Int = 100
+    offset: Int = 0
+  ): [Post!]!
+  post(id: ID!): Post
+
+  comments(
+    postId: ID!
+    includeDeleted: Boolean = false
+    limit: Int = 500
+    offset: Int = 0
+  ): [Comment!]!
+  comment(id: ID!): Comment
+}
+
+type Mutation {
+  createBoard(input: CreateBoardInput!): Board!
+  deleteBoard(id: ID!): Boolean!
+  restoreBoard(id: ID!): Boolean!
+
+  createPost(input: CreatePostInput!): Post!
+  deletePost(id: ID!): Boolean!
+
+  createComment(input: CreateCommentInput!): Comment!
+  deleteComment(id: ID!): Boolean!
+}

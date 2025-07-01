@@ -1,0 +1,8 @@
+{
+    "query": "query GetPosts($boardId: ID!, $limit: Int, $offset: Int) { posts(boardId: $boardId, limit: $limit, offset: $offset) { id title text createdAt } }",
+    "variables": {
+      "boardId": "1",
+      "limit": 100,
+      "offset": 0
+    }
+}

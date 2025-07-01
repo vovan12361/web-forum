@@ -1,0 +1,3 @@
+{
+  "query": "mutation { deletePost(id: 3) }"
+}

@@ -1,0 +1,3 @@
+{
+    "query": "{ comments(postId: 1) { text }}"
+}

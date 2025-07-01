@@ -1,0 +1,3 @@
+{
+  "query": "mutation { createComment(input: { postId: 1, text: \"Это тестовый комментарий\", hashIp: \"192.168.1.0\" }) { id } }"
+}
