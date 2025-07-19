@@ -4,9 +4,35 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-scylla = "0.11.1"  # Последняя стабильная версия
+# Database
+scylla = "0.11.1"
+
+# Core functionality
 chrono = { version = "0.4.41", features = ["serde"] }
 uuid = { version = "1.17.0", features = ["v4", "serde"] }
 actix-web = "4.11.0"
+actix-files = "0.6.5"
 anyhow = "1.0.98"
 serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Async runtime and utilities
+tokio = { version = "1.36", features = ["full"] }
+futures = "0.3.30"
+
+# Logging and metrics
+env_logger = "0.11.3"
+log = "0.4.21"
+prometheus = "0.13.4"
+actix-web-prom = "0.8.0"
+
+# OpenAPI/Swagger
+utoipa = { version = "4.2.0", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "6.0.0", features = ["actix-web"] }
+
+# Tracing
+opentelemetry = { version = "0.22.0", features = ["trace", "metrics"] }
+opentelemetry-jaeger = "0.21.0"
+tracing = "0.1.40"
+tracing-opentelemetry = "0.23.0"
+tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }

@@ -8,9 +8,122 @@ services:
       - "8080:8080"
     depends_on:
       - scylladb
+      - jaeger
+      - prometheus
+      - grafana
+    environment:
+      - RUST_LOG=info
+      - SCYLLA_URI=scylladb:9042
+      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
+    networks:
+      - forum-network
+
+  # Database
   scylladb:
     image: scylladb/scylla:latest
     ports:
       - "9042:9042"
     volumes:
-      - ./scylla-data:/var/lib/scylla 
+      - ./scylla-data:/var/lib/scylla
+    networks:
+      - forum-network
+
+  # Load testing service
+  locust:
+    build:
+      context: ./load-test
+      dockerfile: Dockerfile
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./load-test:/mnt/locust
+    environment:
+      - TARGET_HOST=http://app:8080
+    networks:
+      - forum-network
+    depends_on:
+      - app
+
+  # Monitoring services
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./monitoring/prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - forum-network
+    depends_on:
+      - app
+
+  grafana:
+    image: grafana/grafana:latest
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SERVER_ROOT_URL=http://localhost:3000
+    ports:
+      - "3000:3000"
+    networks:
+      - forum-network
+    depends_on:
+      - prometheus
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    volumes:
+      - ./monitoring/alertmanager:/etc/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    networks:
+      - forum-network
+    depends_on:
+      - prometheus
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"  # UI
+      - "14268:14268"  # HTTP collector for trace submission
+      - "6831:6831/udp"  # Jaeger Thrift over UDP
+    environment:
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    networks:
+      - forum-network
+
+  # Telegram notification service
+  alertbot:
+    build:
+      context: ./monitoring/telegram-bot
+      dockerfile: Dockerfile
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+    networks:
+      - forum-network
+    depends_on:
+      - alertmanager
+
+networks:
+  forum-network:
+    driver: bridge
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  scylla-data: 
