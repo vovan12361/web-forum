@@ -1,6 +1,6 @@
 use crate::models::{Board};
 use actix_web::{get, post, web, HttpResponse, Responder};
-use scylla::transport::session::Session;
+use scylla::Session;
 use serde::Deserialize;
 use uuid::Uuid;
 use chrono::Utc;

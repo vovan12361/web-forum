@@ -1,4 +1,5 @@
-use scylla::{Session, SessionBuilder};
+use scylla::session::Session;
+use scylla::session_builder::SessionBuilder;
 use std::env;
 
 pub async fn connect() -> anyhow::Result<Session> {
