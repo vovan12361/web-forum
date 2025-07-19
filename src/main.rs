@@ -1,7 +1,7 @@
 
 use actix_web::{web, App, HttpServer, middleware::Logger};
 use actix_web::middleware::Compress;
-use actix_web::{HttpResponse, get};
+use actix_web::get;
 use actix_files::NamedFile;
 use scylla::SessionBuilder;
 use std::sync::Arc;
@@ -24,7 +24,7 @@ async fn html_docs() -> io::Result<NamedFile> {
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     // Initialize telemetry
-    telemetry::init_telemetry().expect("Failed to initialize telemetry");
+    let _tracer = telemetry::init_telemetry().expect("Failed to initialize telemetry");
 
     // Enable logging
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -80,7 +80,7 @@ async fn main() -> io::Result<()> {
     .run();
     
     // Run server and capture handle
-    let server_handle = server.handle();
+    let _server_handle = server.handle();
     let server_future = server.await;
     
     // Ensure telemetry is properly shut down

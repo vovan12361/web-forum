@@ -6,15 +6,9 @@ services:
       context: .
     ports:
       - "8080:8080"
-    depends_on:
-      - scylladb
-      - jaeger
-      - prometheus
-      - grafana
     environment:
       - RUST_LOG=info
       - SCYLLA_URI=scylladb:9042
-      - JAEGER_ENDPOINT=http://jaeger:14268/api/traces
     networks:
       - forum-network
 
@@ -88,6 +82,9 @@ services:
     command:
       - '--config.file=/etc/alertmanager/config.yml'
       - '--storage.path=/alertmanager'
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
     ports:
       - "9093:9093"
     networks:
@@ -100,24 +97,13 @@ services:
     ports:
       - "16686:16686"  # UI
       - "14268:14268"  # HTTP collector for trace submission
+      - "4317:4317"    # OTLP gRPC receiver
       - "6831:6831/udp"  # Jaeger Thrift over UDP
     environment:
       - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+      - COLLECTOR_OTLP_ENABLED=true
     networks:
       - forum-network
-
-  # Telegram notification service
-  alertbot:
-    build:
-      context: ./monitoring/telegram-bot
-      dockerfile: Dockerfile
-    environment:
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
-      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
-    networks:
-      - forum-network
-    depends_on:
-      - alertmanager
 
 networks:
   forum-network:

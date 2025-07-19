@@ -1,5 +1,7 @@
 global:
   resolve_timeout: 1m
+  # Telegram bot API endpoint
+  telegram_api_url: 'https://api.telegram.org'
 
 route:
   receiver: 'telegram-notifications'
@@ -10,8 +12,17 @@ route:
 
 receivers:
 - name: 'telegram-notifications'
-  webhook_configs:
-  - url: 'http://alertbot:8080/alert'
+  telegram_configs:
+  - bot_token: '${TELEGRAM_BOT_TOKEN}'
+    chat_id: '${TELEGRAM_CHAT_ID}'
+    title: 'Forum API Alert'
+    message: |
+      Alert: {{ .GroupLabels.alertname }}
+      Status: {{ .Status }}
+      {{ range .Alerts }}
+      Description: {{ .Annotations.description }}
+      Summary: {{ .Annotations.summary }}
+      {{ end }}
     send_resolved: true
 
 inhibit_rules:

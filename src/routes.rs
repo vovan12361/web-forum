@@ -5,7 +5,6 @@ use uuid::Uuid;
 use std::time::Instant;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::Arc;
-use utoipa::{IntoParams, ToSchema};
 
 use crate::models::{
     Board, CreateBoardRequest, 
@@ -103,9 +102,8 @@ pub async fn create_board(
         return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
     }
     
-    // Convert DateTime to the format supported by Scylla (unix timestamp in milliseconds)
+    // Convert DateTime to timestamp milliseconds for ScyllaDB
     let created_at_timestamp = board.created_at.timestamp_millis();
-    
     DB_REQUEST_COUNT.fetch_add(1, Ordering::Relaxed);
     let result = session
         .execute(
@@ -118,7 +116,6 @@ pub async fn create_board(
 
     match result {
         Ok(_) => {
-            // Add response header with processing time for monitoring
             HttpResponse::Created()
                 .append_header(("X-Processing-Time-Ms", duration.to_string()))
                 .json(board)
@@ -425,32 +422,35 @@ pub async fn get_post(
     
     match result {
         Ok(rows) => {
-            if let Some(row) = rows.first_row() {
-                let id = row.columns[0].as_ref().and_then(|c| c.as_uuid()).ok_or("Invalid UUID");
-                let board_id = row.columns[1].as_ref().and_then(|c| c.as_uuid()).ok_or("Invalid board_id");
-                let title = row.columns[2].as_ref().and_then(|c| c.as_text()).ok_or("Invalid title");
-                let content = row.columns[3].as_ref().and_then(|c| c.as_text()).ok_or("Invalid content");
-                let timestamp = row.columns[4].as_ref().and_then(|c| c.as_bigint()).ok_or("Invalid timestamp");
-                let author = row.columns[5].as_ref().and_then(|c| c.as_text()).ok_or("Invalid author");
-                
-                if let (Ok(id), Ok(board_id), Ok(title), Ok(content), Ok(timestamp), Ok(author)) = 
-                    (id, board_id, title, content, timestamp, author) {
-                    let created_at = Utc.timestamp_millis_opt(*timestamp).single()
-                        .unwrap_or_else(|| Utc::now());
+            match rows.first_row() {
+                Ok(row) => {
+                    let id_res = row.columns[0].as_ref().and_then(|c| c.as_uuid());
+                    let board_id_res = row.columns[1].as_ref().and_then(|c| c.as_uuid());
+                    let title_res = row.columns[2].as_ref().and_then(|c| c.as_text());
+                    let content_res = row.columns[3].as_ref().and_then(|c| c.as_text());
+                    let timestamp_res = row.columns[4].as_ref().and_then(|c| c.as_bigint());
+                    let author_res = row.columns[5].as_ref().and_then(|c| c.as_text());
                     
-                    let post = Post {
-                        id: *id,
-                        board_id: *board_id,
-                        title: title.to_string(),
-                        content: content.to_string(),
-                        created_at,
-                        author: author.to_string(),
-                    };
-                    
-                    return HttpResponse::Ok()
-                        .append_header(("X-Processing-Time-Ms", duration.to_string()))
-                        .json(post);
-                }
+                    if let (Some(id), Some(board_id), Some(title), Some(content), Some(timestamp), Some(author)) = 
+                        (id_res, board_id_res, title_res, content_res, timestamp_res, author_res) {
+                        let created_at = Utc.timestamp_millis_opt(timestamp).single()
+                            .unwrap_or_else(|| Utc::now());
+                        
+                        let post = Post {
+                            id,
+                            board_id,
+                            title: title.to_string(),
+                            content: content.to_string(),
+                            created_at,
+                            author: author.to_string(),
+                        };
+                        
+                        return HttpResponse::Ok()
+                            .append_header(("X-Processing-Time-Ms", duration.to_string()))
+                            .json(post);
+                    }
+                },
+                Err(_) => {}
             }
             
             HttpResponse::NotFound().body(format!("Post with id {} not found", post_id))

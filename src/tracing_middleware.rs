@@ -1,11 +1,12 @@
 use actix_web::body::MessageBody;
 use actix_web::dev::{ServiceRequest, ServiceResponse};
 use actix_web::Error;
+use actix_web::http::header::{HeaderName, HeaderValue};
 use std::future::{ready, Ready};
 use std::rc::Rc;
 use std::task::{Context, Poll};
 use actix_web::dev::{Service, Transform};
-use tracing::{info_span, Span};
+use tracing::info_span;
 use futures_util::future::LocalBoxFuture;
 use uuid::Uuid;
 use std::time::Instant;
@@ -15,7 +16,7 @@ pub struct TracingLogger;
 
 impl<S, B> Transform<S, ServiceRequest> for TracingLogger
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
     B: MessageBody + 'static,
 {
@@ -38,7 +39,7 @@ pub struct TracingLoggerMiddleware<S> {
 
 impl<S, B> Service<ServiceRequest> for TracingLoggerMiddleware<S>
 where
-    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+    S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
     S::Future: 'static,
     B: MessageBody + 'static,
 {
@@ -70,8 +71,8 @@ where
             // Set request headers for tracing context
             let mut req = req;
             req.headers_mut().insert(
-                "X-Trace-ID",
-                trace_id.parse().expect("trace_id should be valid header value"),
+                HeaderName::from_static("x-trace-id"),
+                HeaderValue::from_str(&trace_id).expect("trace_id should be valid header value"),
             );
 
             // Enter the span for the duration of this request
@@ -103,8 +104,14 @@ where
             let mut res = res;
             {
                 let headers = res.headers_mut();
-                headers.insert("X-Trace-ID", trace_id.parse().expect("trace_id should be valid header value"));
-                headers.insert("X-Response-Time-Ms", duration.to_string().parse().expect("duration should be valid header value"));
+                headers.insert(
+                    HeaderName::from_static("x-trace-id"),
+                    HeaderValue::from_str(&trace_id).expect("trace_id should be valid header value")
+                );
+                headers.insert(
+                    HeaderName::from_static("x-response-time-ms"),
+                    HeaderValue::from_str(&duration.to_string()).expect("duration should be valid header value")
+                );
             }
 
             Ok(res)

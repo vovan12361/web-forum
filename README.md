@@ -44,7 +44,7 @@ The system consists of the following components:
 - **ScyllaDB**: NoSQL database for storing forum data
 - **Prometheus**: Metrics collection and alerting
 - **Grafana**: Dashboard visualization for metrics
-- **AlertManager**: Alert routing to Telegram
+- **AlertManager**: Alert routing directly to Telegram
 - **Jaeger**: Distributed tracing visualization
 - **Locust**: Load testing service with web UI
 
@@ -147,7 +147,7 @@ Key metrics available:
 
 ## Alerting
 
-Alerts are configured to be sent to the Telegram channel specified in the environment variables.
+Alerts are configured to be sent directly to Telegram via AlertManager's native Telegram integration.
 
 ### Configured Alerts
 
@@ -159,7 +159,7 @@ Alerts are configured to be sent to the Telegram channel specified in the enviro
 To test the high latency alert:
 1. Run a load test with at least 50 users targeting the `/slow` endpoint
 2. Continue for at least 2 minutes
-3. Check your Telegram channel for alerts
+3. Check your Telegram channel for alerts from AlertManager
 
 ## Performance Debugging
 

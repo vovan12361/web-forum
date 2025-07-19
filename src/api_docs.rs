@@ -1,4 +1,4 @@
-use utoipa::{OpenApi, openapi};
+use utoipa::OpenApi;
 use crate::models::{
     Board, CreateBoardRequest,
     Post, CreatePostRequest,
