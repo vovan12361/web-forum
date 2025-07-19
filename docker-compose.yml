@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - scylladb
+  scylladb:
+    image: scylladb/scylla:latest
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./scylla-data:/var/lib/scylla 
