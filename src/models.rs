@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
-use scylla::FromRow;
+use scylla::frame::response::cql::CqlRow;
+use scylla::macros::FromRow;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
