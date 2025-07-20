@@ -22,6 +22,29 @@ services:
     networks:
       - forum-network
 
+  # Log aggregation
+  loki:
+    image: grafana/loki:latest
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki-data:/loki
+    networks:
+      - forum-network
+
+  promtail:
+    image: grafana/promtail:latest
+    volumes:
+      - /var/log:/var/log:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./monitoring/promtail:/etc/promtail
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - forum-network
+    depends_on:
+      - loki
+
   # Load testing service
   locust:
     build:
@@ -99,9 +122,13 @@ services:
       - "14268:14268"  # HTTP collector for trace submission
       - "4317:4317"    # OTLP gRPC receiver
       - "6831:6831/udp"  # Jaeger Thrift over UDP
+      - "14269:14269"  # Admin port with metrics
     environment:
       - COLLECTOR_ZIPKIN_HTTP_PORT=9411
       - COLLECTOR_OTLP_ENABLED=true
+      - METRICS_BACKEND=prometheus
+      - PROMETHEUS_SERVER_URL=http://prometheus:9090
+      - METRICS_HTTP_ROUTE=/metrics
     networks:
       - forum-network
 
@@ -112,4 +139,5 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
-  scylla-data: 
+  scylla-data:
+  loki-data: 

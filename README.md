@@ -30,11 +30,19 @@ The main focus of this project is not only the business logic but also implement
 
 - **Technical Features**:
   - RESTful API with Swagger documentation at `/docs`
-  - Distributed tracing with Jaeger
-  - Metrics collection with Prometheus
-  - Performance visualization with Grafana
-  - Load testing with Locust
-  - Automated alerts to Telegram
+  - **Complete Observability Stack**:
+    - 📊 Prometheus metrics collection (application + infrastructure)
+    - 🔍 Jaeger distributed tracing with automatic instrumentation  
+    - 📋 Loki centralized logging with trace correlation
+    - 📈 Grafana dashboards for visualization
+    - 🚨 AlertManager with Telegram notifications
+  - **Performance Monitoring**:
+    - Request rate, latency (P50/P95/P99), and error tracking
+    - Database performance monitoring
+    - Active request tracking
+    - Cross-service trace correlation
+  - **Load Testing**: Locust integration for stress testing
+  - **Infrastructure as Code**: All monitoring configs version-controlled
 
 ## System Architecture
 
@@ -72,10 +80,14 @@ To get your chat ID, create a public channel and note the username (e.g., @your_
 1. Start all services:
 
 ```bash
+# Using make (recommended)
+make up
+
+# Or using docker-compose directly
 docker-compose up -d
 ```
 
-2. Wait for all services to initialize.
+2. Wait for all services to initialize (about 30 seconds).
 
 3. Access the following endpoints:
    - Forum API: http://localhost:8080
@@ -84,6 +96,30 @@ docker-compose up -d
    - Grafana: http://localhost:3000 (admin/admin)
    - Jaeger UI: http://localhost:16686
    - Locust (Load Testing): http://localhost:8089
+
+4. Verify the complete monitoring setup:
+
+```bash
+# Using make
+make check-monitoring
+
+# Or directly
+cd tools && python3 check_all.py
+```
+
+This will validate that all observability components are working correctly.
+
+### Quick Commands
+
+```bash
+make help              # Show all available commands
+make up                # Start all services
+make down              # Stop all services  
+make logs              # View application logs
+make check-monitoring  # Validate observability stack
+make test-load         # Open load testing interface
+make clean             # Clean up Docker resources
+```
 
 ## API Documentation
 
@@ -128,13 +164,31 @@ To trigger the high DB RPS alert, run a load test with at least 200 users focuse
 
 ## Monitoring
 
+### Prometheus Integration
+
+The service has complete integration with Prometheus for metrics collection, including:
+
+- **HTTP Request Metrics**: Request rates, latencies (P50, P95, P99), active requests
+- **Database Metrics**: Query rates, database response times
+- **Application Metrics**: Business logic performance, error rates
+- **Jaeger Tracing Metrics**: Trace collection and processing statistics
+- **Log Aggregation Metrics**: Loki and Promtail performance metrics
+
+All endpoints are instrumented with distributed tracing using OpenTelemetry and Jaeger, providing:
+- Detailed request traces with timing information
+- Cross-service correlation (when extended)
+- Automatic trace context propagation
+- Structured logging with trace correlation
+
 ### Grafana Dashboards
 
 Access Grafana at http://localhost:3000 (login with admin/admin)
 
 Available dashboards:
-1. **Forum API Dashboard** - Shows API request rates, response times, and error rates
+1. **Forum API Dashboard** - Shows API request rates, response times, error rates, and active requests
 2. **ScyllaDB Dashboard** - Shows database metrics including request rates, latencies, and resource usage
+3. **Logs Dashboard** - Aggregated application and system logs from Loki with filtering capabilities
+4. **Jaeger Tracing Dashboard** - Tracing system performance and trace processing metrics
 
 ### Prometheus Metrics
 
@@ -142,8 +196,44 @@ Access Prometheus at http://localhost:9090
 
 Key metrics available:
 - `api_requests_total` - Total number of API requests
-- `db_requests_total` - Total number of database requests
-- `http_request_duration_seconds` - API request latency histograms
+- `http_request_duration_seconds` - Request duration histogram for P50/P95/P99 calculations
+- `http_requests_active` - Number of currently active requests
+- `db_requests_total` - Total database requests
+- `jaeger_*` - Jaeger collector and query service metrics
+- `loki_*` - Log aggregation service metrics
+
+### Log Collection
+
+Logs are automatically collected from all services using Promtail and stored in Loki:
+- **Application Logs**: Structured JSON logs with trace correlation
+- **Container Logs**: All Docker container logs are scraped automatically
+- **System Logs**: System-level logs from the host
+
+All application logs include:
+- Trace ID for correlation with Jaeger traces
+- Structured fields (log level, component, timing)
+- Request context (method, path, status, duration)
+- Business logic events (board created, post published, etc.)
+
+Example log queries in Grafana:
+```
+{job="containerlogs", container_name=~".*backend.*"} |= "ERROR"
+{job="forum-app"} | json | level="INFO" | line_format "{{.timestamp}} [{{.level}}] {{.message}}"
+```
+
+### Distributed Tracing
+
+Jaeger tracing is fully integrated with the application:
+- **Automatic Instrumentation**: All HTTP endpoints are automatically traced
+- **Database Operations**: All ScyllaDB queries are included in traces
+- **Cross-Service Ready**: Ready for microservice environments
+- **Prometheus Integration**: Jaeger metrics are collected by Prometheus
+
+Access Jaeger UI at http://localhost:16686 to:
+- View individual request traces
+- Analyze service dependencies
+- Debug performance bottlenecks
+- Correlate with application logs using trace IDs
 
 ## Alerting
 
@@ -165,18 +255,59 @@ To test the high latency alert:
 
 For performance debugging, the following tools are available:
 
-1. **Jaeger Tracing** (http://localhost:16686):
-   - View detailed traces of requests through the system
-   - Identify bottlenecks in request processing
-   - Analyze service dependencies
+### Integrated Observability Stack
 
-2. **Grafana Dashboards**:
-   - View real-time metrics and historical trends
-   - Compare performance before and after changes
+The service includes a complete observability stack with automatic integration:
 
-3. **Request Tracing Headers**:
-   - Each request receives a `X-Trace-ID` header
-   - Use this ID to correlate requests across logs and traces
+1. **📊 Prometheus Metrics Collection**:
+   - Application metrics (request rates, latencies, errors)
+   - Infrastructure metrics (Jaeger, Loki, AlertManager, Grafana)
+   - Database metrics (ScyllaDB performance)
+   - All metrics automatically scraped and stored
+
+2. **📋 Distributed Tracing with Jaeger** (http://localhost:16686):
+   - Automatic instrumentation of all HTTP endpoints
+   - Database query tracing with timing
+   - Cross-service correlation ready
+   - Trace metrics exported to Prometheus
+
+3. **📝 Centralized Logging with Loki**:
+   - Automatic log collection from all containers
+   - Structured application logs with trace correlation
+   - Log metrics exported to Prometheus
+   - Query logs directly in Grafana
+
+4. **🎯 Grafana Dashboards** (http://localhost:3000):
+   - API performance dashboard with P50/P95/P99 latencies
+   - Database performance monitoring
+   - Log aggregation and search interface
+   - Jaeger tracing metrics visualization
+
+### Validation Tools
+
+Use the included monitoring validation tools to verify your observability setup:
+
+```bash
+# Check that all metrics are being collected
+cd tools && python3 check_metrics.py
+
+# Verify log collection and parsing
+python3 check_logs.py
+
+# Validate tracing system health
+python3 check_tracing.py
+```
+
+### Request Tracing Headers
+
+Each request receives correlation headers:
+- `X-Trace-ID`: Unique trace identifier for correlation
+- `X-Response-Time-Ms`: Request processing time
+
+Use the trace ID to correlate requests across:
+- Application logs (structured with trace_id field)
+- Jaeger traces (search by trace ID)
+- Prometheus metrics (via tracing exemplars)
 
 ## Infrastructure as Code
 

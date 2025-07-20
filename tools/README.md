@@ -1,6 +1,6 @@
-# Performance Analysis Tools
+# Performance Analysis and Monitoring Tools
 
-This directory contains tools for performance analysis, debugging, and load testing of the Forum API.
+This directory contains tools for performance analysis, debugging, load testing, and monitoring validation of the Forum API.
 
 ## Setup
 
@@ -48,6 +48,53 @@ Simulates various performance issues to test monitoring and alerting.
 ```bash
 ./simulate_bottleneck.py --scenario all
 ```
+
+## Monitoring Validation Tools
+
+### 4. Metrics Checker
+
+Validates that Prometheus is collecting all expected metrics from the application and infrastructure.
+
+```bash
+./check_metrics.py
+```
+
+This tool checks:
+- Prometheus connectivity
+- Target health status
+- Application metrics availability
+- Infrastructure metrics (Jaeger, Loki, etc.)
+- Sample metric values
+
+### 5. Logs Checker
+
+Validates that Loki is collecting and indexing logs from all sources.
+
+```bash
+./check_logs.py
+```
+
+This tool checks:
+- Loki connectivity
+- Available log labels and jobs
+- Container log collection
+- Application log parsing
+- Trace-enabled logs
+
+### 6. Tracing Checker
+
+Validates that Jaeger is collecting traces and exporting metrics.
+
+```bash
+./check_tracing.py
+```
+
+This tool checks:
+- Jaeger UI and API connectivity
+- Services reporting to Jaeger
+- Available operations and traces
+- Jaeger metrics endpoint
+- Trace collection statistics
 
 Options:
 - `--base-url`: The base URL of the API (default: http://localhost:8080)

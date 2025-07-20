@@ -7,6 +7,7 @@ use std::sync::Arc;
 use prometheus::{Counter, Histogram, HistogramOpts, Registry, TextEncoder, Gauge, opts};
 use std::sync::OnceLock;
 use scylla::frame::value::CqlTimestamp;
+use tracing::{info, warn, error, debug, instrument};
 
 use crate::models::{
     Board, CreateBoardRequest, 
@@ -90,14 +91,17 @@ macro_rules! track_request {
     )
 )]
 #[get("/health")]
+#[instrument(name = "health_check", skip_all)]
 pub async fn health_check() -> impl Responder {
     track_request!({
+        debug!("Health check requested");
         let response = HealthResponse {
             status: "OK".to_string(),
             version: env!("CARGO_PKG_VERSION").to_string(),
             timestamp: Utc::now(),
         };
-
+        
+        info!("Health check successful");
         HttpResponse::Ok().json(response)
     })
 }
@@ -114,17 +118,25 @@ pub async fn health_check() -> impl Responder {
     )
 )]
 #[get("/metrics")]
+#[instrument(name = "metrics", skip_all)]
 pub async fn metrics() -> impl Responder {
+    debug!("Prometheus metrics requested");
     let registry = init_metrics();
     let encoder = TextEncoder::new();
     let metric_families = registry.gather();
     
     match encoder.encode_to_string(&metric_families) {
-        Ok(metrics) => HttpResponse::Ok()
-            .content_type("text/plain")
-            .body(metrics),
-        Err(e) => HttpResponse::InternalServerError()
-            .body(format!("Error encoding metrics: {}", e))
+        Ok(metrics) => {
+            debug!("Metrics encoded successfully, {} families", metric_families.len());
+            HttpResponse::Ok()
+                .content_type("text/plain")
+                .body(metrics)
+        },
+        Err(e) => {
+            error!("Error encoding metrics: {}", e);
+            HttpResponse::InternalServerError()
+                .body(format!("Error encoding metrics: {}", e))
+        }
     }
 }
 
@@ -142,11 +154,14 @@ pub async fn metrics() -> impl Responder {
     )
 )]
 #[post("/boards")]
+#[instrument(name = "create_board", skip(session), fields(board_name = %board_data.name))]
 pub async fn create_board(
     session: web::Data<Arc<Session>>,
     board_data: web::Json<CreateBoardRequest>,
 ) -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
+    
+    info!("Creating new board: {}", board_data.name);
     
     let start = Instant::now();
     REQUEST_COUNTER.get().unwrap().inc();
@@ -158,9 +173,12 @@ pub async fn create_board(
         created_at: Utc::now(),
     };
     
+    debug!("Generated board ID: {}", board.id);
+    
     let prepared = session.prepare("INSERT INTO boards (id, name, description, created_at) VALUES (?, ?, ?, ?)").await;
     
     if let Err(e) = prepared {
+        error!("Error preparing board insert query: {}", e);
         let duration = start.elapsed().as_secs_f64();
         HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
         return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
@@ -168,6 +186,7 @@ pub async fn create_board(
     
     // Use CqlTimestamp directly for ScyllaDB
     DB_REQUEST_COUNTER.get().unwrap().inc();
+    debug!("Executing board insert query");
     let result = session
         .execute(
             &prepared.unwrap(),
@@ -180,11 +199,15 @@ pub async fn create_board(
 
     match result {
         Ok(_) => {
+            info!("Board created successfully: {} (duration: {}ms)", board.name, duration.as_millis());
             HttpResponse::Created()
                 .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
                 .json(board)
         },
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error creating board: {}", e)),
+        Err(e) => {
+            error!("Error creating board: {}", e);
+            HttpResponse::InternalServerError().body(format!("Error creating board: {}", e))
+        },
     }
 }
 
@@ -200,16 +223,23 @@ pub async fn create_board(
     )
 )]
 #[get("/boards")]
+#[instrument(name = "get_boards", skip(session))]
 pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
     track_request!({
+        info!("Fetching all boards");
         let prepared = match session.prepare("SELECT id, name, description, created_at FROM boards").await {
-            Ok(p) => p,
+            Ok(p) => {
+                debug!("Query prepared successfully");
+                p
+            },
             Err(e) => {
+                error!("Error preparing get boards query: {}", e);
                 return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
             }
         };
         
         DB_REQUEST_COUNTER.get().unwrap().inc();
+        debug!("Executing get boards query");
         let result = session.execute(&prepared, &[]).await;
         
         match result {
@@ -241,9 +271,13 @@ pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
                     })
                     .collect();
 
+                info!("Successfully fetched {} boards", boards.len());
                 HttpResponse::Ok().json(boards)
             }
-            Err(e) => HttpResponse::InternalServerError().body(format!("Error fetching boards: {}", e)),
+            Err(e) => {
+                error!("Error fetching boards: {}", e);
+                HttpResponse::InternalServerError().body(format!("Error fetching boards: {}", e))
+            },
         }
     })
 }
@@ -264,6 +298,7 @@ pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
     )
 )]
 #[get("/boards/{board_id}")]
+#[instrument(name = "get_board", skip(session), fields(board_id = %path))]
 pub async fn get_board(
     session: web::Data<Arc<Session>>,
     path: web::Path<Uuid>,
@@ -274,10 +309,15 @@ pub async fn get_board(
     REQUEST_COUNTER.get().unwrap().inc();
     
     let board_id = path.into_inner();
+    info!("Fetching board with ID: {}", board_id);
     
     let prepared = match session.prepare("SELECT id, name, description, created_at FROM boards WHERE id = ?").await {
-        Ok(p) => p,
+        Ok(p) => {
+            debug!("Get board query prepared successfully");
+            p
+        },
         Err(e) => {
+            error!("Error preparing get board query: {}", e);
             let duration = start.elapsed().as_secs_f64();
             HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
             return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
@@ -285,6 +325,7 @@ pub async fn get_board(
     };
     
     DB_REQUEST_COUNTER.get().unwrap().inc();
+    debug!("Executing get board query");
     let result = session.execute(&prepared, (board_id,)).await;
     
     let duration = start.elapsed();
@@ -304,14 +345,19 @@ pub async fn get_board(
                     created_at,
                 };
                 
+                info!("Board found: {}", board.name);
                 HttpResponse::Ok()
                     .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
                     .json(board)
             } else {
+                warn!("Board with id {} not found", board_id);
                 HttpResponse::NotFound().body(format!("Board with id {} not found", board_id))
             }
         }
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error fetching board: {}", e)),
+        Err(e) => {
+            error!("Error fetching board: {}", e);
+            HttpResponse::InternalServerError().body(format!("Error fetching board: {}", e))
+        },
     }
 }
 
@@ -330,19 +376,27 @@ pub async fn get_board(
     )
 )]
 #[post("/posts")]
+#[instrument(name = "create_post", skip(session), fields(board_id = %post_data.board_id, title = %post_data.title, author = %post_data.author))]
 pub async fn create_post(
     session: web::Data<Arc<Session>>,
     post_data: web::Json<CreatePostRequest>,
 ) -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
     
+    info!("Creating new post: '{}' by {} on board {}", post_data.title, post_data.author, post_data.board_id);
+    
     let start = Instant::now();
     REQUEST_COUNTER.get().unwrap().inc();
     
     // First check if the board exists
+    debug!("Checking if board exists: {}", post_data.board_id);
     let board_check = match session.prepare("SELECT id FROM boards WHERE id = ?").await {
-        Ok(p) => p,
+        Ok(p) => {
+            debug!("Board check query prepared successfully");
+            p
+        },
         Err(e) => {
+            error!("Error preparing board check query: {}", e);
             let duration = start.elapsed().as_secs_f64();
             HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
             return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
@@ -355,12 +409,16 @@ pub async fn create_post(
     match board_result {
         Ok(rows) => {
             if rows.rows.unwrap_or_default().is_empty() {
+                warn!("Board with id {} not found", post_data.board_id);
                 let duration = start.elapsed().as_secs_f64();
                 HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
                 return HttpResponse::BadRequest().body(format!("Board with id {} not found", post_data.board_id));
+            } else {
+                debug!("Board exists, proceeding with post creation");
             }
         },
         Err(e) => {
+            error!("Error checking board existence: {}", e);
             let duration = start.elapsed().as_secs_f64();
             HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
             return HttpResponse::InternalServerError().body(format!("Error checking board: {}", e));
@@ -376,9 +434,15 @@ pub async fn create_post(
         author: post_data.author.clone(),
     };
     
+    debug!("Generated post ID: {}", post.id);
+    
     let prepared = match session.prepare("INSERT INTO posts (id, board_id, title, content, created_at, author) VALUES (?, ?, ?, ?, ?, ?)").await {
-        Ok(p) => p,
+        Ok(p) => {
+            debug!("Post insert query prepared successfully");
+            p
+        },
         Err(e) => {
+            error!("Error preparing post insert query: {}", e);
             let duration = start.elapsed().as_secs_f64();
             HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
             return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
@@ -387,6 +451,7 @@ pub async fn create_post(
     
     // Use CqlTimestamp directly for ScyllaDB
     DB_REQUEST_COUNTER.get().unwrap().inc();
+    debug!("Executing post insert query");
     let result = session
         .execute(
             &prepared,
@@ -398,10 +463,16 @@ pub async fn create_post(
     HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
 
     match result {
-        Ok(_) => HttpResponse::Created()
-            .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
-            .json(post),
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error creating post: {}", e)),
+        Ok(_) => {
+            info!("Post created successfully: '{}' (duration: {}ms)", post.title, duration.as_millis());
+            HttpResponse::Created()
+                .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
+                .json(post)
+        },
+        Err(e) => {
+            error!("Error creating post: {}", e);
+            HttpResponse::InternalServerError().body(format!("Error creating post: {}", e))
+        },
     }
 }
 
@@ -754,11 +825,14 @@ pub async fn get_comments_by_post(
     )
 )]
 #[get("/slow")]
+#[instrument(name = "slow_endpoint")]
 pub async fn slow_endpoint() -> impl Responder {
     track_request!({
+        warn!("Slow endpoint called - simulating 600ms delay");
         // Simulate slow processing
         tokio::time::sleep(tokio::time::Duration::from_millis(600)).await;
         
+        info!("Slow endpoint completed");
         HttpResponse::Ok().body("This endpoint is intentionally slow")
     })
 }

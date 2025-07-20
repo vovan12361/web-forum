@@ -23,4 +23,48 @@ scrape_configs:
 
   - job_name: 'scylla'
     static_configs:
-      - targets: ['scylladb:9180'] 
+      - targets: ['scylladb:9180']
+
+  # Jaeger metrics - collector admin port
+  - job_name: 'jaeger-collector'
+    static_configs:
+      - targets: ['jaeger:14269']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Jaeger metrics - query service
+  - job_name: 'jaeger-query'
+    static_configs:
+      - targets: ['jaeger:16687']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    # Note: Query service might not expose metrics on separate port in all-in-one mode
+    # If this target fails, the collector metrics above will still provide Jaeger insights
+
+  # Loki metrics
+  - job_name: 'loki'
+    static_configs:
+      - targets: ['loki:3100']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Promtail metrics
+  - job_name: 'promtail'
+    static_configs:
+      - targets: ['promtail:9080']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # AlertManager metrics
+  - job_name: 'alertmanager'
+    static_configs:
+      - targets: ['alertmanager:9093']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+
+  # Grafana metrics
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s 
