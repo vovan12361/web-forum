@@ -4,7 +4,7 @@ use chrono::{TimeZone, Utc};
 use uuid::Uuid;
 use std::time::Instant;
 use std::sync::Arc;
-use prometheus::{Counter, Histogram, HistogramOpts, Registry, TextEncoder, opts};
+use prometheus::{Counter, Histogram, HistogramOpts, Registry, TextEncoder, Gauge, opts};
 use std::sync::OnceLock;
 use scylla::frame::value::CqlTimestamp;
 
@@ -20,6 +20,7 @@ static METRICS_REGISTRY: OnceLock<Registry> = OnceLock::new();
 static REQUEST_COUNTER: OnceLock<Counter> = OnceLock::new();
 static DB_REQUEST_COUNTER: OnceLock<Counter> = OnceLock::new();
 static HTTP_REQUEST_DURATION: OnceLock<Histogram> = OnceLock::new();
+static ACTIVE_REQUESTS: OnceLock<Gauge> = OnceLock::new();
 
 fn init_metrics() -> &'static Registry {
     METRICS_REGISTRY.get_or_init(|| {
@@ -40,16 +41,41 @@ fn init_metrics() -> &'static Registry {
             "HTTP request duration in seconds"
         ).buckets(vec![0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0])).unwrap();
         
+        let active_requests_gauge = Gauge::with_opts(opts!(
+            "http_requests_active",
+            "Number of HTTP requests currently being processed"
+        )).unwrap();
+        
         registry.register(Box::new(request_counter.clone())).unwrap();
         registry.register(Box::new(db_request_counter.clone())).unwrap();
         registry.register(Box::new(http_duration_histogram.clone())).unwrap();
+        registry.register(Box::new(active_requests_gauge.clone())).unwrap();
         
         REQUEST_COUNTER.set(request_counter).unwrap();
         DB_REQUEST_COUNTER.set(db_request_counter).unwrap();
         HTTP_REQUEST_DURATION.set(http_duration_histogram).unwrap();
+        ACTIVE_REQUESTS.set(active_requests_gauge).unwrap();
         
         registry
     })
+}
+
+// Macro to track request metrics
+macro_rules! track_request {
+    ($block:expr) => {{
+        init_metrics(); // Ensure metrics are initialized
+        let start = Instant::now();
+        REQUEST_COUNTER.get().unwrap().inc();
+        ACTIVE_REQUESTS.get().unwrap().inc();
+        
+        let result = $block;
+        
+        let duration = start.elapsed();
+        HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
+        ACTIVE_REQUESTS.get().unwrap().dec();
+        
+        result
+    }};
 }
 
 // Health check endpoint
@@ -65,13 +91,15 @@ fn init_metrics() -> &'static Registry {
 )]
 #[get("/health")]
 pub async fn health_check() -> impl Responder {
-    let response = HealthResponse {
-        status: "OK".to_string(),
-        version: env!("CARGO_PKG_VERSION").to_string(),
-        timestamp: Utc::now(),
-    };
+    track_request!({
+        let response = HealthResponse {
+            status: "OK".to_string(),
+            version: env!("CARGO_PKG_VERSION").to_string(),
+            timestamp: Utc::now(),
+        };
 
-    HttpResponse::Ok().json(response)
+        HttpResponse::Ok().json(response)
+    })
 }
 
 // Metrics endpoint for Prometheus
@@ -173,61 +201,51 @@ pub async fn create_board(
 )]
 #[get("/boards")]
 pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
-    init_metrics(); // Ensure metrics are initialized
-    
-    let start = Instant::now();
-    REQUEST_COUNTER.get().unwrap().inc();
-    
-    let prepared = match session.prepare("SELECT id, name, description, created_at FROM boards").await {
-        Ok(p) => p,
-        Err(e) => {
-            let duration = start.elapsed().as_secs_f64();
-            HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
-            return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
-        }
-    };
-    
-    DB_REQUEST_COUNTER.get().unwrap().inc();
-    let result = session.execute(&prepared, &[]).await;
-    
-    let duration = start.elapsed();
-    HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
-    
-    match result {
-        Ok(rows) => {
-            let boards: Vec<Board> = rows
-                .rows
-                .unwrap_or_default()
-                .into_iter()
-                .filter_map(|row| {
-                    let id = row.columns[0].as_ref()?.as_uuid()?;
-                    let name = row.columns[1].as_ref()?.as_text()?.to_string();
-                    let description = row.columns[2].as_ref()?.as_text()?.to_string();
-                    
-                    // Try to get as CqlTimestamp first, fallback to bigint
-                    let created_at = if let Some(cql_ts) = row.columns[3].as_ref().and_then(|c| c.as_cql_timestamp()) {
-                        Utc.timestamp_millis_opt(cql_ts.0).single()?
-                    } else if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
-                        Utc.timestamp_millis_opt(millis).single()?
-                    } else {
-                        return None;
-                    };
+    track_request!({
+        let prepared = match session.prepare("SELECT id, name, description, created_at FROM boards").await {
+            Ok(p) => p,
+            Err(e) => {
+                return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
+            }
+        };
+        
+        DB_REQUEST_COUNTER.get().unwrap().inc();
+        let result = session.execute(&prepared, &[]).await;
+        
+        match result {
+            Ok(rows) => {
+                let boards: Vec<Board> = rows
+                    .rows
+                    .unwrap_or_default()
+                    .into_iter()
+                    .filter_map(|row| {
+                        let id = row.columns[0].as_ref()?.as_uuid()?;
+                        let name = row.columns[1].as_ref()?.as_text()?.to_string();
+                        let description = row.columns[2].as_ref()?.as_text()?.to_string();
+                        
+                        // Try to get as CqlTimestamp first, fallback to bigint
+                        let created_at = if let Some(cql_ts) = row.columns[3].as_ref().and_then(|c| c.as_cql_timestamp()) {
+                            Utc.timestamp_millis_opt(cql_ts.0).single()?
+                        } else if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
+                            Utc.timestamp_millis_opt(millis).single()?
+                        } else {
+                            return None;
+                        };
 
-                    Some(Board {
-                        id,
-                        name,
-                        description,
-                        created_at,
+                        Some(Board {
+                            id,
+                            name,
+                            description,
+                            created_at,
+                        })
                     })
-                })
-                .collect();
+                    .collect();
 
-            HttpResponse::Ok()
-                .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
-                .json(boards)
+                HttpResponse::Ok().json(boards)
+            }
+            Err(e) => HttpResponse::InternalServerError().body(format!("Error fetching boards: {}", e)),
         }
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error fetching boards: {}", e)),
-    }
+    })
 }
 
 /// Get board by ID
@@ -737,16 +755,10 @@ pub async fn get_comments_by_post(
 )]
 #[get("/slow")]
 pub async fn slow_endpoint() -> impl Responder {
-    init_metrics(); // Ensure metrics are initialized
-    
-    let start = Instant::now();
-    REQUEST_COUNTER.get().unwrap().inc();
-    
-    // Simulate slow processing
-    tokio::time::sleep(tokio::time::Duration::from_millis(600)).await;
-    
-    let duration = start.elapsed();
-    HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
-    
-    HttpResponse::Ok().body("This endpoint is intentionally slow")
+    track_request!({
+        // Simulate slow processing
+        tokio::time::sleep(tokio::time::Duration::from_millis(600)).await;
+        
+        HttpResponse::Ok().body("This endpoint is intentionally slow")
+    })
 }
