@@ -1,8 +1,11 @@
 import json
 import uuid
+import os
 from locust import HttpUser, task, between
 
 class ForumUser(HttpUser):
+    # Set the host from environment variable or use default
+    host = os.getenv('TARGET_HOST', 'http://localhost:8080')
     wait_time = between(1, 5)
     
     def on_start(self):

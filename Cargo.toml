@@ -28,7 +28,7 @@ prometheus = "0.13.4"
 actix-web-prom = "0.8.0"
 
 # OpenAPI/Swagger
-utoipa = { version = "4.2.0", features = ["actix_extras"] }
+utoipa = { version = "4.2.0", features = ["actix_extras", "uuid", "chrono"] }
 utoipa-swagger-ui = { version = "6.0.0", features = ["actix-web"] }
 
 # Tracing

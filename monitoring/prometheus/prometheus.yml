@@ -25,21 +25,12 @@ scrape_configs:
     static_configs:
       - targets: ['scylladb:9180']
 
-  # Jaeger metrics - collector admin port
-  - job_name: 'jaeger-collector'
+  # Jaeger metrics - admin port (all-in-one mode)
+  - job_name: 'jaeger'
     static_configs:
       - targets: ['jaeger:14269']
     metrics_path: '/metrics'
     scrape_interval: 15s
-
-  # Jaeger metrics - query service
-  - job_name: 'jaeger-query'
-    static_configs:
-      - targets: ['jaeger:16687']
-    metrics_path: '/metrics'
-    scrape_interval: 15s
-    # Note: Query service might not expose metrics on separate port in all-in-one mode
-    # If this target fails, the collector metrics above will still provide Jaeger insights
 
   # Loki metrics
   - job_name: 'loki'

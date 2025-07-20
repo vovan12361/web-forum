@@ -1,4 +1,4 @@
-.PHONY: help up down logs build check-monitoring test-load clean
+.PHONY: help up down logs build rebuild check-monitoring test-load clean
 
 # Default target
 help:
@@ -7,6 +7,7 @@ help:
 	@echo "  make down            - Stop all services"
 	@echo "  make logs            - Show application logs"
 	@echo "  make build           - Build the application"
+	@echo "  make rebuild         - Full rebuild and restart"
 	@echo "  make check-monitoring - Validate monitoring stack"
 	@echo "  make test-load       - Run load tests"
 	@echo "  make clean           - Clean up resources"
@@ -34,6 +35,23 @@ logs:
 # Build the application
 build:
 	docker-compose build
+
+# Full rebuild and restart
+rebuild:
+	@echo "🔄 Stopping services..."
+	docker-compose down
+	@echo "🔨 Building application..."
+	docker-compose build
+	@echo "🚀 Starting services..."
+	docker-compose up -d
+	@echo "⏳ Waiting for services to initialize..."
+	@sleep 30
+	@echo "✅ Services should be ready!"
+	@echo "📚 API Documentation: http://localhost:8080/docs"
+	@echo "📊 Prometheus: http://localhost:9090"
+	@echo "📈 Grafana: http://localhost:3000 (admin/admin)"
+	@echo "🔍 Jaeger: http://localhost:16686"
+	@echo "🧪 Load Testing: http://localhost:8089"
 
 # Validate monitoring stack
 check-monitoring:
