@@ -11,6 +11,9 @@ services:
       - SCYLLA_URI=scylladb:9042
     networks:
       - forum-network
+    depends_on:
+      scylladb:
+        condition: service_healthy
 
   # Database
   scylladb:
@@ -21,6 +24,12 @@ services:
       - ./scylla-data:/var/lib/scylla
     networks:
       - forum-network
+    healthcheck:
+      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
 
   # Log aggregation
   loki:

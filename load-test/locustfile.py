@@ -88,9 +88,9 @@ class ForumUser(HttpUser):
     def health_check(self):
         self.client.get("/health")
     
-    @task(1)
-    def trigger_slow_endpoint(self):
-        self.client.get("/slow")
+    # @task(1)
+    # def trigger_slow_endpoint(self):
+    #     self.client.get("/slow")
 
 class ForumViewerUser(HttpUser):
     """User that only reads content, doesn't create anything"""
@@ -117,6 +117,6 @@ class ForumViewerUser(HttpUser):
     def metrics_check(self):
         self.client.get("/metrics")
     
-    @task(1)
-    def trigger_slow_endpoint(self):
-        self.client.get("/slow") 
+    # @task(1)
+    # def trigger_slow_endpoint(self):
+    #     self.client.get("/slow") 
