@@ -204,9 +204,14 @@ pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
                     let name = row.columns[1].as_ref()?.as_text()?.to_string();
                     let description = row.columns[2].as_ref()?.as_text()?.to_string();
                     
-                    // Get timestamp as i64 and convert to DateTime<Utc>
-                    let timestamp_millis = row.columns[3].as_ref()?.as_bigint()?;
-                    let created_at = chrono::Utc.timestamp_millis_opt(timestamp_millis).single()?;
+                    // Try to get as CqlTimestamp first, fallback to bigint
+                    let created_at = if let Some(cql_ts) = row.columns[3].as_ref().and_then(|c| c.as_cql_timestamp()) {
+                        Utc.timestamp_millis_opt(cql_ts.0).single()?
+                    } else if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
+                        Utc.timestamp_millis_opt(millis).single()?
+                    } else {
+                        return None;
+                    };
 
                     Some(Board {
                         id,
@@ -269,9 +274,9 @@ pub async fn get_board(
     
     match result {
         Ok(rows) => {
-            if let Some(row) = rows.first_row_typed::<(Uuid, String, String, i64)>().ok() {
-                let (id, name, description, created_at_ts) = row;
-                let created_at = Utc.timestamp_millis_opt(created_at_ts).single()
+            if let Some(row) = rows.first_row_typed::<(Uuid, String, String, CqlTimestamp)>().ok() {
+                let (id, name, description, created_at_cql) = row;
+                let created_at = Utc.timestamp_millis_opt(created_at_cql.0).single()
                     .unwrap_or_else(|| Utc::now());
                 
                 let board = Board {
@@ -434,10 +439,16 @@ pub async fn get_posts_by_board(
                     let board_id = row.columns[1].as_ref()?.as_uuid()?;
                     let title = row.columns[2].as_ref()?.as_text()?.to_string();
                     let content = row.columns[3].as_ref()?.as_text()?.to_string();
-                    let timestamp_millis = row.columns[4].as_ref()?.as_bigint()?;
                     let author = row.columns[5].as_ref()?.as_text()?.to_string();
                     
-                    let created_at = chrono::Utc.timestamp_millis_opt(timestamp_millis).single()?;
+                    // Try to get as CqlTimestamp first, fallback to bigint
+                    let created_at = if let Some(cql_ts) = row.columns[4].as_ref().and_then(|c| c.as_cql_timestamp()) {
+                        Utc.timestamp_millis_opt(cql_ts.0).single()?
+                    } else if let Some(millis) = row.columns[4].as_ref().and_then(|c| c.as_bigint()) {
+                        Utc.timestamp_millis_opt(millis).single()?
+                    } else {
+                        return None;
+                    };
 
                     Some(Post {
                         id,
@@ -508,13 +519,19 @@ pub async fn get_post(
                     let board_id_res = row.columns[1].as_ref().and_then(|c| c.as_uuid());
                     let title_res = row.columns[2].as_ref().and_then(|c| c.as_text());
                     let content_res = row.columns[3].as_ref().and_then(|c| c.as_text());
-                    let timestamp_res = row.columns[4].as_ref().and_then(|c| c.as_bigint());
                     let author_res = row.columns[5].as_ref().and_then(|c| c.as_text());
                     
-                    if let (Some(id), Some(board_id), Some(title), Some(content), Some(timestamp), Some(author)) = 
-                        (id_res, board_id_res, title_res, content_res, timestamp_res, author_res) {
-                        let created_at = Utc.timestamp_millis_opt(timestamp).single()
-                            .unwrap_or_else(|| Utc::now());
+                    // Try to get timestamp as CqlTimestamp first, fallback to bigint
+                    let created_at = if let Some(cql_ts) = row.columns[4].as_ref().and_then(|c| c.as_cql_timestamp()) {
+                        Utc.timestamp_millis_opt(cql_ts.0).single().unwrap_or_else(|| Utc::now())
+                    } else if let Some(millis) = row.columns[4].as_ref().and_then(|c| c.as_bigint()) {
+                        Utc.timestamp_millis_opt(millis).single().unwrap_or_else(|| Utc::now())
+                    } else {
+                        Utc::now()
+                    };
+                    
+                    if let (Some(id), Some(board_id), Some(title), Some(content), Some(author)) = 
+                        (id_res, board_id_res, title_res, content_res, author_res) {
                         
                         let post = Post {
                             id,
@@ -679,10 +696,16 @@ pub async fn get_comments_by_post(
                     let id = row.columns[0].as_ref()?.as_uuid()?;
                     let post_id = row.columns[1].as_ref()?.as_uuid()?;
                     let content = row.columns[2].as_ref()?.as_text()?.to_string();
-                    let timestamp_millis = row.columns[3].as_ref()?.as_bigint()?;
                     let author = row.columns[4].as_ref()?.as_text()?.to_string();
                     
-                    let created_at = chrono::Utc.timestamp_millis_opt(timestamp_millis).single()?;
+                    // Try to get as CqlTimestamp first, fallback to bigint
+                    let created_at = if let Some(cql_ts) = row.columns[3].as_ref().and_then(|c| c.as_cql_timestamp()) {
+                        Utc.timestamp_millis_opt(cql_ts.0).single()?
+                    } else if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
+                        Utc.timestamp_millis_opt(millis).single()?
+                    } else {
+                        return None;
+                    };
 
                     Some(Comment {
                         id,
