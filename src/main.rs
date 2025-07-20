@@ -18,7 +18,7 @@ mod tracing_middleware;
 
 #[get("/html-docs")]
 async fn html_docs() -> io::Result<NamedFile> {
-    NamedFile::open("static/docs.html")
+    NamedFile::open("../static/docs.html")
 }
 
 #[actix_web::main]
