@@ -15,15 +15,15 @@ pub fn init_telemetry() -> Result<sdktrace::Tracer, Box<dyn std::error::Error>> 
         .tonic()
         .with_endpoint("http://jaeger:4317");
 
-    // Use sampling to reduce overhead under high load
-    let sampler = sdktrace::Sampler::TraceIdRatioBased(0.1); // Sample 10% of traces
+    // Use higher sampling rate for testing (50% of traces)
+    let sampler = sdktrace::Sampler::TraceIdRatioBased(0.5);
     
     let trace_config = sdktrace::Config::default()
         .with_sampler(sampler)
         .with_resource(Resource::new(vec![
             KeyValue::new("service.name", service_name),
             KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
-            KeyValue::new("deployment.environment", "production"),
+            KeyValue::new("deployment.environment", "development"),
         ]));
 
     let tracer = opentelemetry_otlp::new_pipeline()

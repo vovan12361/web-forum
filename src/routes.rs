@@ -199,56 +199,46 @@ pub async fn create_board(
     session: web::Data<Arc<Session>>,
     board_data: web::Json<CreateBoardRequest>,
 ) -> impl Responder {
-    init_metrics(); // Ensure metrics are initialized
-    
-    info!("Creating new board: {}", board_data.name);
-    
-    let start = Instant::now();
-    REQUEST_COUNTER.get().unwrap().inc();
-    
-    let board = Board {
-        id: Uuid::new_v4(),
-        name: board_data.name.clone(),
-        description: board_data.description.clone(),
-        created_at: Utc::now(),
-    };
-    
-    debug!("Generated board ID: {}", board.id);
-    
-    let prepared = session.prepare("INSERT INTO boards (id, name, description, created_at) VALUES (?, ?, ?, ?)").await;
-    
-    if let Err(e) = prepared {
-        error!("Error preparing board insert query: {}", e);
-        let duration = start.elapsed().as_secs_f64();
-        HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
-        return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
-    }
-    
-    // Use CqlTimestamp directly for ScyllaDB
-    DB_REQUEST_COUNTER.get().unwrap().inc();
-    debug!("Executing board insert query");
-    let result = session
-        .execute(
-            &prepared.unwrap(),
-            (board.id, &board.name, &board.description, CqlTimestamp(board.created_at.timestamp_millis())),
-        )
-        .await;
+    track_request!({
+        info!("Creating new board: {}", board_data.name);
+        
+        let board = Board {
+            id: Uuid::new_v4(),
+            name: board_data.name.clone(),
+            description: board_data.description.clone(),
+            created_at: Utc::now(),
+        };
+        
+        debug!("Generated board ID: {}", board.id);
+        
+        // Use prepared statement for better performance
+        let result = if let Some(stmt) = CREATE_BOARD_STMT.get() {
+            session.execute(
+                stmt,
+                (board.id, &board.name, &board.description, board.created_at.timestamp_millis()),
+            ).await
+        } else {
+            // Fallback to regular query if prepared statement not ready
+            warn!("Prepared statement not available, using regular query");
+            session.query(
+                "INSERT INTO boards (id, name, description, created_at) VALUES (?, ?, ?, ?)",
+                (board.id, &board.name, &board.description, board.created_at.timestamp_millis()),
+            ).await
+        };
+        
+        DB_REQUEST_COUNTER.get().unwrap().inc();
 
-    let duration = start.elapsed();
-    HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
-
-    match result {
-        Ok(_) => {
-            info!("Board created successfully: {} (duration: {}ms)", board.name, duration.as_millis());
-            HttpResponse::Created()
-                .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
-                .json(board)
-        },
-        Err(e) => {
-            error!("Error creating board: {}", e);
-            HttpResponse::InternalServerError().body(format!("Error creating board: {}", e))
-        },
-    }
+        match result {
+            Ok(_) => {
+                info!("Board created successfully: {}", board.name);
+                HttpResponse::Created().json(board)
+            },
+            Err(e) => {
+                error!("Error creating board: {}", e);
+                HttpResponse::InternalServerError().body(format!("Error creating board: {}", e))
+            },
+        }
+    })
 }
 
 /// Get all boards
@@ -344,62 +334,57 @@ pub async fn get_board(
     session: web::Data<Arc<Session>>,
     path: web::Path<Uuid>,
 ) -> impl Responder {
-    init_metrics(); // Ensure metrics are initialized
-    
-    let start = Instant::now();
-    REQUEST_COUNTER.get().unwrap().inc();
-    
-    let board_id = path.into_inner();
-    info!("Fetching board with ID: {}", board_id);
-    
-    let prepared = match session.prepare("SELECT id, name, description, created_at FROM boards WHERE id = ?").await {
-        Ok(p) => {
-            debug!("Get board query prepared successfully");
-            p
-        },
-        Err(e) => {
-            error!("Error preparing get board query: {}", e);
-            let duration = start.elapsed().as_secs_f64();
-            HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
-            return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
-        }
-    };
-    
-    DB_REQUEST_COUNTER.get().unwrap().inc();
-    debug!("Executing get board query");
-    let result = session.execute(&prepared, (board_id,)).await;
-    
-    let duration = start.elapsed();
-    HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
-    
-    match result {
-        Ok(rows) => {
-            if let Some(row) = rows.first_row_typed::<(Uuid, String, String, CqlTimestamp)>().ok() {
-                let (id, name, description, created_at_cql) = row;
-                let created_at = Utc.timestamp_millis_opt(created_at_cql.0).single()
-                    .unwrap_or_else(|| Utc::now());
+    track_request!({
+        let board_id = path.into_inner();
+        info!("Fetching board with ID: {}", board_id);
+        
+        // Use prepared statement for better performance
+        let result = if let Some(stmt) = GET_BOARD_STMT.get() {
+            session.execute(stmt, (board_id,)).await
+        } else {
+            // Fallback to regular query if prepared statement not ready
+            warn!("Prepared statement not available, using regular query");
+            session.query("SELECT id, name, description, created_at FROM boards WHERE id = ?", (board_id,)).await
+        };
+        
+        DB_REQUEST_COUNTER.get().unwrap().inc();
+        
+        match result {
+            Ok(rows) => {
+                if let Some(row) = rows.rows.as_ref().and_then(|r| r.first()) {
+                    if let (Some(id), Some(name), Some(description)) = (
+                        row.columns[0].as_ref().and_then(|c| c.as_uuid()),
+                        row.columns[1].as_ref().and_then(|c| c.as_text()),
+                        row.columns[2].as_ref().and_then(|c| c.as_text()),
+                    ) {
+                        // Handle bigint timestamps
+                        let created_at = if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
+                            Utc.timestamp_millis_opt(millis).single().unwrap_or_else(|| Utc::now())
+                        } else {
+                            Utc::now()
+                        };
+                        
+                        let board = Board {
+                            id,
+                            name: name.to_string(),
+                            description: description.to_string(),
+                            created_at,
+                        };
+                        
+                        info!("Board found: {}", board.name);
+                        return HttpResponse::Ok().json(board);
+                    }
+                }
                 
-                let board = Board {
-                    id,
-                    name,
-                    description,
-                    created_at,
-                };
-                
-                info!("Board found: {}", board.name);
-                HttpResponse::Ok()
-                    .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
-                    .json(board)
-            } else {
                 warn!("Board with id {} not found", board_id);
                 HttpResponse::NotFound().body(format!("Board with id {} not found", board_id))
             }
+            Err(e) => {
+                error!("Error fetching board: {}", e);
+                HttpResponse::InternalServerError().body(format!("Error fetching board: {}", e))
+            },
         }
-        Err(e) => {
-            error!("Error fetching board: {}", e);
-            HttpResponse::InternalServerError().body(format!("Error fetching board: {}", e))
-        },
-    }
+    })
 }
 
 // Post related endpoints

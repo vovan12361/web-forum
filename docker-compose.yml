@@ -31,8 +31,8 @@ services:
     container_name: scylla
     command: >
       --seeds=scylla
-      --smp=2
-      --memory=2G
+      --smp=1
+      --memory=512M
       --overprovisioned=1
       --developer-mode=1
     environment:
@@ -48,9 +48,9 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 768M
         reservations:
-          memory: 1G
+          memory: 512M
     healthcheck:
       test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
       interval: 30s
@@ -165,8 +165,19 @@ services:
       - METRICS_BACKEND=prometheus
       - PROMETHEUS_SERVER_URL=http://prometheus:9090
       - METRICS_HTTP_ROUTE=/metrics
+      - SPAN_STORAGE_TYPE=memory
+      - MEMORY_MAX_TRACES=10000
+      - LOG_LEVEL=info
+    volumes:
+      - jaeger-data:/tmp
     networks:
       - forum-network
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
 
 networks:
   forum-network:
@@ -176,4 +187,5 @@ volumes:
   prometheus-data:
   grafana-data:
   scylla-data:
-  loki-data: 
+  loki-data:
+  jaeger-data: 
