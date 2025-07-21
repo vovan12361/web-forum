@@ -26,18 +26,10 @@ pub fn init_telemetry() -> Result<sdktrace::Tracer, Box<dyn std::error::Error>> 
             KeyValue::new("deployment.environment", "production"),
         ]));
 
-    // Configure batch export with smaller batches for high load
-    let batch_config = sdktrace::BatchConfig::default()
-        .with_max_export_batch_size(256)      // Smaller batches
-        .with_max_queue_size(1024)            // Limit queue size
-        .with_scheduled_delay(std::time::Duration::from_millis(100))  // Export more frequently
-        .with_max_export_timeout(std::time::Duration::from_secs(2));  // Shorter timeout
-
     let tracer = opentelemetry_otlp::new_pipeline()
         .tracing()
         .with_exporter(exporter)
         .with_trace_config(trace_config)
-        .with_batch_config(batch_config)
         .install_batch(runtime::Tokio)?;
 
     // Create OpenTelemetry tracing layer
