@@ -1,5 +1,5 @@
 use actix_web::{get, post, web, HttpResponse, Responder};
-use scylla::Session;
+use scylla::{Session, prepared_statement::PreparedStatement};
 use chrono::{TimeZone, Utc};
 use uuid::Uuid;
 use std::time::Instant;
@@ -140,6 +140,46 @@ pub async fn metrics() -> impl Responder {
     }
 }
 
+// Prepared statements for better performance
+static GET_BOARDS_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+static GET_BOARD_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+static CREATE_BOARD_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+static GET_POSTS_BY_BOARD_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+static GET_POST_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+static CREATE_POST_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+static GET_COMMENTS_BY_POST_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+static CREATE_COMMENT_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+
+// Function to initialize prepared statements
+pub async fn init_prepared_statements(session: &Session) -> Result<(), Box<dyn std::error::Error>> {
+    // Prepare board statements
+    let boards_get_stmt = session.prepare("SELECT id, name, description, created_at FROM boards").await?;
+    let board_get_stmt = session.prepare("SELECT id, name, description, created_at FROM boards WHERE id = ?").await?;
+    let board_create_stmt = session.prepare("INSERT INTO boards (id, name, description, created_at) VALUES (?, ?, ?, ?)").await?;
+    
+    // Prepare post statements
+    let posts_by_board_get_stmt = session.prepare("SELECT id, board_id, title, content, created_at, author FROM posts WHERE board_id = ?").await?;
+    let post_get_stmt = session.prepare("SELECT id, board_id, title, content, created_at, author FROM posts WHERE id = ?").await?;
+    let post_create_stmt = session.prepare("INSERT INTO posts (id, board_id, title, content, created_at, author) VALUES (?, ?, ?, ?, ?, ?)").await?;
+    
+    // Prepare comment statements
+    let comments_by_post_get_stmt = session.prepare("SELECT id, post_id, content, created_at, author FROM comments WHERE post_id = ?").await?;
+    let comment_create_stmt = session.prepare("INSERT INTO comments (id, post_id, content, created_at, author) VALUES (?, ?, ?, ?, ?)").await?;
+    
+    // Set prepared statements
+    GET_BOARDS_STMT.set(boards_get_stmt).map_err(|_| "Failed to set GET_BOARDS_STMT")?;
+    GET_BOARD_STMT.set(board_get_stmt).map_err(|_| "Failed to set GET_BOARD_STMT")?;
+    CREATE_BOARD_STMT.set(board_create_stmt).map_err(|_| "Failed to set CREATE_BOARD_STMT")?;
+    GET_POSTS_BY_BOARD_STMT.set(posts_by_board_get_stmt).map_err(|_| "Failed to set GET_POSTS_BY_BOARD_STMT")?;
+    GET_POST_STMT.set(post_get_stmt).map_err(|_| "Failed to set GET_POST_STMT")?;
+    CREATE_POST_STMT.set(post_create_stmt).map_err(|_| "Failed to set CREATE_POST_STMT")?;
+    GET_COMMENTS_BY_POST_STMT.set(comments_by_post_get_stmt).map_err(|_| "Failed to set GET_COMMENTS_BY_POST_STMT")?;
+    CREATE_COMMENT_STMT.set(comment_create_stmt).map_err(|_| "Failed to set CREATE_COMMENT_STMT")?;
+    
+    info!("Prepared statements initialized successfully");
+    Ok(())
+}
+
 // Board related endpoints
 /// Create a new board
 ///
@@ -227,20 +267,21 @@ pub async fn create_board(
 pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
     track_request!({
         info!("Fetching all boards");
-        let prepared = match session.prepare("SELECT id, name, description, created_at FROM boards").await {
-            Ok(p) => {
-                debug!("Query prepared successfully");
-                p
-            },
-            Err(e) => {
-                error!("Error preparing get boards query: {}", e);
-                return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
-            }
+        
+        let start = Instant::now();
+        
+        // Use prepared statement for better performance
+        let result = if let Some(stmt) = GET_BOARDS_STMT.get() {
+            session.execute(stmt, &[]).await
+        } else {
+            // Fallback to regular query if prepared statement not ready
+            warn!("Prepared statement not available, using regular query");
+            session.query("SELECT id, name, description, created_at FROM boards", &[]).await
         };
         
+        let duration = start.elapsed();
+        
         DB_REQUEST_COUNTER.get().unwrap().inc();
-        debug!("Executing get boards query");
-        let result = session.execute(&prepared, &[]).await;
         
         match result {
             Ok(rows) => {
@@ -253,10 +294,8 @@ pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
                         let name = row.columns[1].as_ref()?.as_text()?.to_string();
                         let description = row.columns[2].as_ref()?.as_text()?.to_string();
                         
-                        // Try to get as CqlTimestamp first, fallback to bigint
-                        let created_at = if let Some(cql_ts) = row.columns[3].as_ref().and_then(|c| c.as_cql_timestamp()) {
-                            Utc.timestamp_millis_opt(cql_ts.0).single()?
-                        } else if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
+                        // Handle bigint timestamps
+                        let created_at = if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
                             Utc.timestamp_millis_opt(millis).single()?
                         } else {
                             return None;
@@ -271,8 +310,10 @@ pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
                     })
                     .collect();
 
-                info!("Successfully fetched {} boards", boards.len());
-                HttpResponse::Ok().json(boards)
+                info!("Successfully fetched {} boards (duration: {}ms)", boards.len(), duration.as_millis());
+                HttpResponse::Ok()
+                    .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
+                    .json(boards)
             }
             Err(e) => {
                 error!("Error fetching boards: {}", e);

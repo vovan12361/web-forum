@@ -28,17 +28,42 @@ services:
   # Database
   scylladb:
     image: scylladb/scylla:latest
-    ports:
-      - "9042:9042"
+    container_name: scylla
+    command: >
+      --seeds=scylla
+      --smp=2
+      --memory=2G
+      --overprovisioned=1
+      --api-address=0.0.0.0
+      --listen-address=0.0.0.0
+      --broadcast-address=scylla
+      --broadcast-rpc-address=scylla
+      --developer-mode=1
+      --experimental=1
+      --log-level=info
+      --batch-size-warn-threshold=100KB
+      --batch-size-fail-threshold=1MB
+    environment:
+      - SCYLLA_DEVELOPMENT=1
+      - SCYLLA_EXPERIMENTAL=1
     volumes:
       - ./scylla-data:/var/lib/scylla
+    ports:
+      - "9042:9042"
+      - "9160:9160"
     networks:
       - forum-network
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
     healthcheck:
-      test: ["CMD-SHELL", "[ $$(nodetool statusgossip) = running ]"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
 
   # Log aggregation

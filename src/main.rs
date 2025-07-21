@@ -3,7 +3,8 @@ use actix_web::{web, App, HttpServer, middleware::Logger};
 use actix_web::middleware::Compress;
 use actix_web::get;
 use actix_files::NamedFile;
-use scylla::SessionBuilder;
+use scylla::{SessionBuilder, transport::session::PoolSize};
+use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::io;
 use utoipa_swagger_ui::SwaggerUi;
@@ -29,10 +30,12 @@ async fn main() -> io::Result<()> {
     // Enable logging
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-    // Connect to ScyllaDB cluster
+    // Connect to ScyllaDB cluster with optimizations
     let session = Arc::new(
         SessionBuilder::new()
             .known_node("scylladb:9042") // Using docker-compose service name
+            .connection_timeout(std::time::Duration::from_secs(5))
+            .pool_size(PoolSize::PerHost(NonZeroUsize::new(8).unwrap()))  // 8 connections per host
             .build()
             .await
             .expect("Failed to connect to ScyllaDB")
@@ -40,6 +43,9 @@ async fn main() -> io::Result<()> {
 
     // Initialize database
     db::init_db(&session).await.expect("Failed to initialize database");
+    
+    // Initialize prepared statements for better performance
+    routes::init_prepared_statements(&session).await.expect("Failed to initialize prepared statements");
 
     println!("Starting server at http://0.0.0.0:8080");
     println!("API documentation available at http://0.0.0.0:8080/docs");
