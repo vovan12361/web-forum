@@ -9,11 +9,21 @@ services:
     environment:
       - RUST_LOG=info
       - SCYLLA_URI=scylladb:9042
+      - RUST_MIN_STACK=8388608
     networks:
       - forum-network
     depends_on:
       scylladb:
         condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 512M
+    ulimits:
+      stack: 8388608  # 8MB stack size
+    restart: unless-stopped
 
   # Database
   scylladb:

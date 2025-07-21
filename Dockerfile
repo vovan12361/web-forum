@@ -28,4 +28,8 @@ WORKDIR /app
 COPY --from=builder /app/target/release/backend /usr/local/bin/backend
 COPY static/ ./static/
 
+# Set environment variables for stack size and runtime optimization
+ENV RUST_MIN_STACK=8388608
+ENV RUST_LOG=info
+
 CMD ["backend"] 

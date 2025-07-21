@@ -76,15 +76,13 @@ async fn main() -> io::Result<()> {
             // Artificial slow endpoint for testing alerts
             .service(routes::slow_endpoint)
     })
+    .workers(4)  // Limit number of workers for stability
+    .max_connections(1024)  // Limit max connections per worker  
+    .client_request_timeout(std::time::Duration::from_secs(10))  // Request timeout
+    .client_disconnect_timeout(std::time::Duration::from_secs(5))  // Disconnect timeout
     .bind("0.0.0.0:8080")?
     .run();
     
-    // Run server and capture handle
-    let _server_handle = server.handle();
-    let server_future = server.await;
-    
-    // Ensure telemetry is properly shut down
-    telemetry::shutdown_telemetry();
-    
-    server_future
+    // Run server without capturing handle to reduce overhead
+    server.await
 }
