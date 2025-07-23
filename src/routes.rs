@@ -6,7 +6,6 @@ use std::time::Instant;
 use std::sync::Arc;
 use prometheus::{Counter, Histogram, HistogramOpts, Registry, TextEncoder, Gauge, opts};
 use std::sync::OnceLock;
-use scylla::frame::value::CqlTimestamp;
 use tracing::{info, warn, error, debug, instrument};
 
 use crate::models::{
@@ -475,13 +474,13 @@ pub async fn create_post(
         }
     };
     
-    // Use CqlTimestamp directly for ScyllaDB
+    // Use timestamp_millis directly for ScyllaDB BIGINT
     DB_REQUEST_COUNTER.get().unwrap().inc();
     debug!("Executing post insert query");
     let result = session
         .execute(
             &prepared,
-            (post.id, post.board_id, &post.title, &post.content, CqlTimestamp(post.created_at.timestamp_millis()), &post.author),
+            (post.id, post.board_id, &post.title, &post.content, post.created_at.timestamp_millis(), &post.author),
         )
         .await;
 
@@ -556,10 +555,8 @@ pub async fn get_posts_by_board(
                     let content = row.columns[3].as_ref()?.as_text()?.to_string();
                     let author = row.columns[5].as_ref()?.as_text()?.to_string();
                     
-                    // Try to get as CqlTimestamp first, fallback to bigint
-                    let created_at = if let Some(cql_ts) = row.columns[4].as_ref().and_then(|c| c.as_cql_timestamp()) {
-                        Utc.timestamp_millis_opt(cql_ts.0).single()?
-                    } else if let Some(millis) = row.columns[4].as_ref().and_then(|c| c.as_bigint()) {
+                    // Handle bigint timestamps from database
+                    let created_at = if let Some(millis) = row.columns[4].as_ref().and_then(|c| c.as_bigint()) {
                         Utc.timestamp_millis_opt(millis).single()?
                     } else {
                         return None;
@@ -636,10 +633,8 @@ pub async fn get_post(
                     let content_res = row.columns[3].as_ref().and_then(|c| c.as_text());
                     let author_res = row.columns[5].as_ref().and_then(|c| c.as_text());
                     
-                    // Try to get timestamp as CqlTimestamp first, fallback to bigint
-                    let created_at = if let Some(cql_ts) = row.columns[4].as_ref().and_then(|c| c.as_cql_timestamp()) {
-                        Utc.timestamp_millis_opt(cql_ts.0).single().unwrap_or_else(|| Utc::now())
-                    } else if let Some(millis) = row.columns[4].as_ref().and_then(|c| c.as_bigint()) {
+                    // Handle bigint timestamps from database
+                    let created_at = if let Some(millis) = row.columns[4].as_ref().and_then(|c| c.as_bigint()) {
                         Utc.timestamp_millis_opt(millis).single().unwrap_or_else(|| Utc::now())
                     } else {
                         Utc::now()
@@ -740,12 +735,12 @@ pub async fn create_comment(
         }
     };
     
-    // Use CqlTimestamp directly for ScyllaDB
+    // Use timestamp_millis directly for ScyllaDB BIGINT
     DB_REQUEST_COUNTER.get().unwrap().inc();
     let result = session
         .execute(
             &prepared,
-            (comment.id, comment.post_id, &comment.content, CqlTimestamp(comment.created_at.timestamp_millis()), &comment.author),
+            (comment.id, comment.post_id, &comment.content, comment.created_at.timestamp_millis(), &comment.author),
         )
         .await;
 
@@ -813,10 +808,8 @@ pub async fn get_comments_by_post(
                     let content = row.columns[2].as_ref()?.as_text()?.to_string();
                     let author = row.columns[4].as_ref()?.as_text()?.to_string();
                     
-                    // Try to get as CqlTimestamp first, fallback to bigint
-                    let created_at = if let Some(cql_ts) = row.columns[3].as_ref().and_then(|c| c.as_cql_timestamp()) {
-                        Utc.timestamp_millis_opt(cql_ts.0).single()?
-                    } else if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
+                    // Handle bigint timestamps from database
+                    let created_at = if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
                         Utc.timestamp_millis_opt(millis).single()?
                     } else {
                         return None;
