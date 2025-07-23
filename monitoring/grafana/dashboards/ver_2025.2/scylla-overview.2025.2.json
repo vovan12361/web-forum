@@ -16,7 +16,10 @@
             },
             {
                 "class": "annotation_restart",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "resets(scylla_gossip_heart_beat{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -31,7 +34,10 @@
             },
             {
                 "class": "annotation_stall",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_stall_detector_reported{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -46,7 +52,10 @@
             },
             {
                 "class": "annotation_schema_changed",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_database_schema_changed{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -61,7 +70,10 @@
             },
             {
                 "class": "annotation_manager_task",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "scylla_manager_task_active_count{type=~\"repair|backup\",cluster=\"$cluster\"}>0",
                 "hide": false,
@@ -76,7 +88,10 @@
             },
             {
                 "class": "annotation_hints_writes",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_hints_manager_written{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -91,7 +106,10 @@
             },
             {
                 "class": "annotation_hints_sent",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_hints_manager_sent{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -106,7 +124,10 @@
             },
             {
                 "class": "mv_building",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "sum(scylla_view_builder_builds_in_progress{cluster=\"$cluster\"})>0",
                 "hide": false,
@@ -121,7 +142,10 @@
             },
             {
                 "class": "ops_annotation",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "10*min(scylla_node_ops_finished_percentage{cluster=\"$cluster\"}) by (ops, dc,instance) < 10",
                 "hide": false,
@@ -140,7 +164,10 @@
                     ">5.2",
                     ">2023.1"
                 ],
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "10*min(scylla_streaming_finished_percentage{cluster=\"$cluster\"}) by (ops, dc,instance) < 10",
                 "hide": false,
@@ -308,7 +335,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of nodes configured in the cluster.",
             "fieldConfig": {
                 "defaults": {
@@ -364,7 +394,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of unreachable nodes.\nUsually because a machine is down or unreachable.",
             "fieldConfig": {
                 "defaults": {
@@ -426,7 +459,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of joining and leaving nodes.\nThe number of nodes that are up but not actively part of the cluster, either because they are still joining or because they are leaving.",
             "fieldConfig": {
                 "defaults": {
@@ -489,7 +525,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "noValue": " Offline",
@@ -621,7 +660,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Average Write Latency",
             "fieldConfig": {
                 "defaults": {
@@ -684,7 +726,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "99% write Latency",
             "fieldConfig": {
                 "defaults": {
@@ -747,7 +792,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Average Read Latency",
             "fieldConfig": {
                 "defaults": {
@@ -810,7 +858,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "99% read Latency",
             "fieldConfig": {
                 "defaults": {
@@ -873,7 +924,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "custom": {},
@@ -930,7 +984,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The percentage of the time during which Scylla utilized the CPU. Note that because Scylla does busy polling for some time before going idle, CPU utilization as seen by the operating system may be much higher. Your system is not yet CPU-bottlenecked until this metric is high.",
             "fieldConfig": {
                 "defaults": {
@@ -993,7 +1050,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The rate of timeouts (read and write).\n\nTimeouts are an indication of an overloaded system",
             "fieldConfig": {
                 "defaults": {
@@ -1086,7 +1146,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Write attempts - include all writes that reached the coordinator node, even if they will eventually fail",
             "editable": true,
             "error": false,
@@ -1170,7 +1233,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1272,7 +1338,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Read attempts - include all reads that reached the coordinator node, even if they will eventually fail",
             "editable": true,
             "error": false,
@@ -1356,7 +1425,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1502,7 +1574,10 @@
         },
         {
             "class": "vertical_lcd",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "custom": {},
@@ -1561,7 +1636,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The average Disk usage per [[by]]",
             "editable": true,
             "error": false,
@@ -1644,7 +1722,10 @@
         },
         {
             "class": "graph_panel_int",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds the number of currently active compactions.",
             "editable": true,
             "error": false,
@@ -1726,7 +1807,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The Hits and Misses",
             "editable": true,
             "error": false,
@@ -1829,7 +1913,10 @@
         },
         {
             "class": "small_nodes_table",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -2406,7 +2493,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Write attempts - include all writes that reached the coordinator node, even if they will eventually fail",
             "editable": true,
             "error": false,
@@ -2527,7 +2617,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -2629,7 +2722,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Requests that Scylla tried to write but timed out. Timeouts are counted in the node that received the request (the coordinator), not at the replicas.",
             "editable": true,
             "error": false,
@@ -2725,7 +2821,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Read attempts - include all reads that reached the coordinator node, even if they will eventually fail",
             "editable": true,
             "error": false,
@@ -2844,7 +2943,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -2946,7 +3048,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Requests that Scylla tried to read but timed out. Timeouts are counted in the node that received the request (the coordinator), not at the replicas.",
             "editable": true,
             "error": false,
@@ -3168,7 +3273,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -3243,7 +3351,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -3406,7 +3517,10 @@
                     "text": "None",
                     "value": ""
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -3438,7 +3552,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -3470,7 +3587,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -3502,7 +3622,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -3529,7 +3652,10 @@
                     "text": "/var/lib/scylla",
                     "value": "/var/lib/scylla"
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -3561,7 +3687,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -3666,7 +3795,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 2,
@@ -3697,7 +3829,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "query_result(count(up{job=\"scylla\"}) by (dc))",
                 "error": null,
                 "hide": 2,

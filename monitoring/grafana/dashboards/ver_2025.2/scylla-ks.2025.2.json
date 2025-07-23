@@ -16,7 +16,10 @@
             },
             {
                 "class": "annotation_restart",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "resets(scylla_gossip_heart_beat{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -31,7 +34,10 @@
             },
             {
                 "class": "annotation_stall",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_stall_detector_reported{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -46,7 +52,10 @@
             },
             {
                 "class": "annotation_schema_changed",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_database_schema_changed{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -61,7 +70,10 @@
             },
             {
                 "class": "annotation_manager_task",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "scylla_manager_task_active_count{type=~\"repair|backup\",cluster=\"$cluster\"}>0",
                 "hide": false,
@@ -76,7 +88,10 @@
             },
             {
                 "class": "annotation_hints_writes",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_hints_manager_written{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -91,7 +106,10 @@
             },
             {
                 "class": "annotation_hints_sent",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_hints_manager_sent{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -106,7 +124,10 @@
             },
             {
                 "class": "mv_building",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "sum(scylla_view_builder_builds_in_progress{cluster=\"$cluster\"})>0",
                 "hide": false,
@@ -121,7 +142,10 @@
             },
             {
                 "class": "ops_annotation",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "10*min(scylla_node_ops_finished_percentage{cluster=\"$cluster\"}) by (ops, dc,instance) < 10",
                 "hide": false,
@@ -140,7 +164,10 @@
                     ">5.2",
                     ">2023.1"
                 ],
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "10*min(scylla_streaming_finished_percentage{cluster=\"$cluster\"}) by (ops, dc,instance) < 10",
                 "hide": false,
@@ -211,7 +238,10 @@
                     "value": "avg"
                 }
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "decimals": 0,
                 "defaults": {
@@ -568,7 +598,10 @@
                     "value": "avg"
                 }
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "decimals": 0,
                 "defaults": {
@@ -908,7 +941,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -988,7 +1024,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1071,7 +1110,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1155,7 +1197,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1239,7 +1284,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1319,7 +1367,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1402,7 +1453,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1486,7 +1540,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1570,7 +1627,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1652,7 +1712,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1733,7 +1796,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1814,7 +1880,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1942,7 +2011,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -2017,7 +2089,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -2180,7 +2255,10 @@
                     "text": "None",
                     "value": ""
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -2212,7 +2290,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -2244,7 +2325,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -2276,7 +2360,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -2305,7 +2392,10 @@
                     "text": "None",
                     "value": ""
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -2334,7 +2424,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "query_result(topk(20, sum by (cf) (rate(scylla_column_family_read_latency_count{cluster=\"$cluster\", ks=\"$ks\"}[${__range_s}s])or scylla_column_family_cache_hit_rate{cluster=\"$cluster\", ks=\"$ks\"}*0) + sum by (cf) (rate(scylla_column_family_write_latency_count{cluster=\"$cluster\", ks=\"$ks\"}[${__range_s}s])or scylla_column_family_cache_hit_rate{cluster=\"$cluster\", ks=\"$ks\"}*0)))",
                 "error": null,
                 "hide": 0,
@@ -2456,7 +2549,10 @@
             },
             {
                 "allValue": null,
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "scylla_column_family_write_latency_count{cluster=\"$cluster\"}",
                 "description": null,
                 "error": null,

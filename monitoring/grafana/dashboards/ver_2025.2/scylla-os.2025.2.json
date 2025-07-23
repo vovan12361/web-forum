@@ -12,7 +12,10 @@
             },
             {
                 "class": "annotation_restart",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "resets(scylla_gossip_heart_beat{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -27,7 +30,10 @@
             },
             {
                 "class": "annotation_stall",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_stall_detector_reported{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -42,7 +48,10 @@
             },
             {
                 "class": "annotation_schema_changed",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_database_schema_changed{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -140,7 +149,10 @@
         {
             "aliasColors": {},
             "class": "piechart_panel_percent",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -241,7 +253,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -323,7 +338,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -412,7 +430,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -493,7 +514,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -618,7 +642,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -707,7 +734,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -794,7 +824,10 @@
         },
         {
             "class": "bps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -883,7 +916,10 @@
         },
         {
             "class": "bps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -970,7 +1006,10 @@
         },
         {
             "class": "seconds_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The average read time from disk",
             "editable": true,
             "error": false,
@@ -1051,7 +1090,10 @@
         },
         {
             "class": "seconds_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The average write time to disk",
             "editable": true,
             "error": false,
@@ -1176,7 +1218,10 @@
         },
         {
             "class": "pps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1265,7 +1310,10 @@
         },
         {
             "class": "pps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1354,7 +1402,10 @@
         },
         {
             "class": "bps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1443,7 +1494,10 @@
         },
         {
             "class": "bps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1575,7 +1629,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The available memory, note that in a production environment we expect this to be low, Scylla would use most of the available memory when possible",
             "editable": true,
             "error": false,
@@ -1657,7 +1714,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Percent of available memory, note that in a production environment we expect this to be low, Scylla would use most of the available memory when possible",
             "editable": true,
             "error": false,
@@ -1740,7 +1800,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Percent of CPU used, note that in production Scylla would try to use most of the CPU and this is not a problem",
             "editable": true,
             "error": false,
@@ -1823,7 +1886,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "CPU frequency should be set for performance.\n\n The current frequency should match the max frequency. If that is not the case, check your host configuration.",
             "editable": true,
             "error": false,
@@ -1886,7 +1952,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "reports the number of TCP segments that have been retransmitted, indicating potential network issues or packet loss.",
             "editable": true,
             "error": false,
@@ -2016,7 +2085,10 @@
                     "text": "None",
                     "value": ""
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -2048,7 +2120,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -2080,7 +2155,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -2144,7 +2222,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -2171,7 +2252,10 @@
                     "text": "None",
                     "value": ""
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "hide": 0,
                 "includeAll": false,
                 "label": null,
@@ -2194,7 +2278,10 @@
                     "text": "/var/lib/scylla",
                     "value": "/var/lib/scylla"
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "hide": 0,
                 "includeAll": false,
                 "label": "Mount path",

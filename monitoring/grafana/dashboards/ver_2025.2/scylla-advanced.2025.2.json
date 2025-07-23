@@ -12,7 +12,10 @@
             },
             {
                 "class": "annotation_restart",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "resets(scylla_gossip_heart_beat{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -27,7 +30,10 @@
             },
             {
                 "class": "annotation_stall",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_stall_detector_reported{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -42,7 +48,10 @@
             },
             {
                 "class": "annotation_schema_changed",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_database_schema_changed{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -195,7 +204,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of nodes configured in the cluster.",
             "fieldConfig": {
                 "defaults": {
@@ -251,7 +263,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of unreachable nodes.\nUsually because a machine is down or unreachable.",
             "fieldConfig": {
                 "defaults": {
@@ -313,7 +328,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of joining and leaving nodes.\nThe number of nodes that are up but not actively part of the cluster, either because they are still joining or because they are leaving.",
             "fieldConfig": {
                 "defaults": {
@@ -376,7 +394,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "noValue": " Offline",
@@ -508,7 +529,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Average Write Latency",
             "fieldConfig": {
                 "defaults": {
@@ -571,7 +595,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "99% write Latency",
             "fieldConfig": {
                 "defaults": {
@@ -634,7 +661,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Average Read Latency",
             "fieldConfig": {
                 "defaults": {
@@ -697,7 +727,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "99% read Latency",
             "fieldConfig": {
                 "defaults": {
@@ -760,7 +793,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "custom": {},
@@ -817,7 +853,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The percentage of the time during which Scylla utilized the CPU. Note that because Scylla does busy polling for some time before going idle, CPU utilization as seen by the operating system may be much higher. Your system is not yet CPU-bottlenecked until this metric is high.",
             "fieldConfig": {
                 "defaults": {
@@ -880,7 +919,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The rate of timeouts (read and write).\n\nTimeouts are an indication of an overloaded system",
             "fieldConfig": {
                 "defaults": {
@@ -985,7 +1027,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph shows how IO queue consumption is distributed between io-groups and streams.\n\nscylla_io_queue_consumption",
             "editable": true,
             "error": false,
@@ -1067,7 +1112,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph shows the ratio of dispatch rate to completion rate. It is expected to be 1.0, growing larger on reactor stalls or disk problems.\n\nscylla_io_queue_flow_ratio",
             "editable": true,
             "error": false,
@@ -1163,7 +1211,10 @@
         },
         {
             "class": "seconds_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Total time spent in the queue",
             "editable": true,
             "error": false,
@@ -1246,7 +1297,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of requests in the queue",
             "editable": true,
             "error": false,
@@ -1329,7 +1383,10 @@
         },
         {
             "class": "bps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The queue bandwidth rate in bytes \n\nscylla_io_queue_total_bytes",
             "editable": true,
             "error": false,
@@ -1412,7 +1469,10 @@
         },
         {
             "class": "iops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The rate of io queue operation\n\nsscylla_io_queue_total_operations",
             "editable": true,
             "error": false,
@@ -1495,7 +1555,10 @@
         },
         {
             "class": "seconds_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Total time spent in disk",
             "editable": true,
             "error": false,
@@ -1577,7 +1640,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of requests in the disk",
             "editable": true,
             "error": false,
@@ -1659,7 +1725,10 @@
         },
         {
             "class": "seconds_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The time the class waited for being dispatched with non-empty software queue.\n\nLarge IO delays coupled with small starvation time denotes that scheduler is doing its job properly, and it's upper layer that overflows disk capacity.\n\nLarge IO delays coupled with large starvation time denotes that there might be some problem on the scheduler level that it cannot deliver IO requests from that class into disk in timely manner or the disk is slow and cannot afford timely dispatching.",
             "editable": true,
             "error": false,
@@ -1801,7 +1870,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Scylla employs an event-loop like reactor that alternates between the execution of different groups of tasks periodically. This graph shows how much time was spent in $sg group",
             "editable": true,
             "error": false,
@@ -1886,7 +1958,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Scylla employs an event-loop like reactor that alternates between the execution of different groups of tasks periodically. The maximum amount of time during which a task group can run is called the \"task quota\". Some task groups may disrespect that and run for longer. This may cause latency issues",
             "editable": true,
             "error": false,
@@ -1971,7 +2046,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Scylla employs an event-loop like reactor that alternates between the execution of different groups of tasks periodically. The maximum amount of time during which a task group can run is called the \"task quota\". Some task groups may disrespect that and run for longer.\n\n This graph shows the amount of time the group was waiting to get CPU time.",
             "editable": true,
             "error": false,
@@ -2056,7 +2134,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Shares assigned to the $sg. Shares determine how Scylla reactor distributes the task quotas between groups (Higher share gets more quotas)",
             "editable": true,
             "error": false,
@@ -2185,7 +2266,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of Read requests that failed due to an 'unavailable' error",
             "editable": true,
             "error": false,
@@ -2268,7 +2352,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of write requests that failed due to an 'unavailable' error",
             "editable": true,
             "error": false,
@@ -2351,7 +2438,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of Stalls per seconds.",
             "editable": true,
             "error": false,
@@ -2434,7 +2524,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of Read requests that failed due to an 'unavailable' error",
             "editable": true,
             "error": false,
@@ -2517,7 +2610,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of write requests that failed on a local Node",
             "editable": true,
             "error": false,
@@ -2600,7 +2696,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of write requests that failed on a local Node",
             "editable": true,
             "error": false,
@@ -2686,7 +2785,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of AIO Errors",
             "editable": true,
             "error": false,
@@ -2772,7 +2874,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Total number of abandoned failed futures, futures destroyed while still containing an exception.",
             "editable": true,
             "error": false,
@@ -2858,7 +2963,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of C++ exceptions thrown.\n\n An exception by itself does not indicate a problem",
             "editable": true,
             "error": false,
@@ -2989,7 +3097,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds the size of disk space in bytes reserved for data so far. A too high value indicates that we have some bottleneck in the writing to sstables path",
             "editable": true,
             "error": false,
@@ -3072,7 +3183,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds the size of disk space in bytes used for data so far. A too high value indicates that we have some bottleneck in the writing to sstables path",
             "editable": true,
             "error": false,
@@ -3155,7 +3269,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts a number of times the flush() method was called for a file",
             "editable": true,
             "error": false,
@@ -3241,7 +3358,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds the current number of commit log segments",
             "editable": true,
             "error": false,
@@ -3327,7 +3447,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts a number of times a flush limit was exceeded. A non-zero value indicates that there are too many pending flush operations (see pending_flushes) and some of them will be blocked till the total amount of pending flush operations drops below 5.",
             "editable": true,
             "error": false,
@@ -3413,7 +3536,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds the number of currently pending allocations. A non-zero value indicates that we have a bottleneck in the disk write flow.",
             "editable": true,
             "error": false,
@@ -3499,7 +3625,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts a number of requests blocked due to memory pressure. A non-zero value indicates that the commitlog memory quota is not enough to serve the required amount of requests.",
             "editable": true,
             "error": false,
@@ -3585,7 +3714,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds the current number of unused segments. A non-zero value indicates that the disk write path became temporary slow.",
             "editable": true,
             "error": false,
@@ -3671,7 +3803,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds the number of not closed segments that still have some free space. This value should not get too high.",
             "editable": true,
             "error": false,
@@ -3769,7 +3904,10 @@
             "panels": [
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "scylla_rpc_client_count",
                     "editable": true,
                     "error": false,
@@ -3851,7 +3989,10 @@
                 },
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "scylla_rpc_client_sent_messages",
                     "editable": true,
                     "error": false,
@@ -3933,7 +4074,10 @@
                 },
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "scylla_rpc_client_replied",
                     "editable": true,
                     "error": false,
@@ -4015,7 +4159,10 @@
                 },
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "scylla_rpc_client_exception_received",
                     "editable": true,
                     "error": false,
@@ -4097,7 +4244,10 @@
                 },
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "scylla_rpc_client_timeout",
                     "editable": true,
                     "error": false,
@@ -4179,7 +4329,10 @@
                 },
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "the number of requests queued for sending, but not yet sent\n\nscylla_rpc_client_pending",
                     "editable": true,
                     "error": false,
@@ -4261,7 +4414,10 @@
                 },
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "the number of requests waiting for the reply\n\nscylla_rpc_client_wait_reply",
                     "editable": true,
                     "error": false,
@@ -4343,7 +4499,10 @@
                 },
                 {
                     "class": "us_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "The total time it takes an RPC message to travel back and forth between verb caller and server.\n\nscylla_rpc_client_delay_samples",
                     "editable": true,
                     "error": false,
@@ -4481,7 +4640,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -4556,7 +4718,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -4716,7 +4881,10 @@
                     "text": "None",
                     "value": ""
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -4748,7 +4916,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -4780,7 +4951,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -4812,7 +4986,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -4844,7 +5021,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -4876,7 +5056,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -4912,7 +5095,10 @@
                     ">5.4",
                     ">2024.1"
                 ],
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -4944,7 +5130,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,

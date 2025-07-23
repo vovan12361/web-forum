@@ -12,7 +12,10 @@
             },
             {
                 "class": "annotation_restart",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "resets(scylla_gossip_heart_beat{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -27,7 +30,10 @@
             },
             {
                 "class": "annotation_stall",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_stall_detector_reported{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -42,7 +48,10 @@
             },
             {
                 "class": "annotation_schema_changed",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_database_schema_changed{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -240,7 +249,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of nodes configured in the cluster.",
             "fieldConfig": {
                 "defaults": {
@@ -296,7 +308,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of unreachable nodes.\nUsually because a machine is down or unreachable.",
             "fieldConfig": {
                 "defaults": {
@@ -358,7 +373,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of joining and leaving nodes.\nThe number of nodes that are up but not actively part of the cluster, either because they are still joining or because they are leaving.",
             "fieldConfig": {
                 "defaults": {
@@ -421,7 +439,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "mappings": [
@@ -521,7 +542,10 @@
         },
         {
             "class": "vertical_lcd",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "custom": {},
@@ -576,7 +600,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "",
             "fieldConfig": {
                 "defaults": {
@@ -639,7 +666,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "",
             "fieldConfig": {
                 "defaults": {
@@ -702,7 +732,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Total Operations per seconds",
             "fieldConfig": {
                 "defaults": {
@@ -764,7 +797,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The percentage of the time during which Scylla utilized the CPU. Note that because Scylla does busy polling for some time before going idle, CPU utilization as seen by the operating system may be much higher. Your system is not yet CPU-bottlenecked until this metric is high.",
             "fieldConfig": {
                 "defaults": {
@@ -827,7 +863,10 @@
         },
         {
             "class": "small_stat",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The rate of timeouts (read and write).\n\nTimeouts are an indication of an overloaded system",
             "fieldConfig": {
                 "defaults": {
@@ -920,7 +959,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -1009,7 +1051,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of Alternator Operations by operation type",
             "editable": true,
             "error": false,
@@ -1094,7 +1139,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The P95 Latencies per operation",
             "editable": true,
             "error": false,
@@ -1179,7 +1227,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The P99 Latencies per operation",
             "editable": true,
             "error": false,
@@ -1308,7 +1359,10 @@
         },
         {
             "class": "dc_nodes_table",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "fieldConfig": {
                 "defaults": {
                     "color": {
@@ -2183,7 +2237,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -2266,7 +2323,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -2349,7 +2409,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -2432,7 +2495,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -2515,7 +2581,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -2598,7 +2667,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -2681,7 +2753,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -2764,7 +2839,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of items processed as a result of BatchWriteItem",
             "editable": true,
             "error": false,
@@ -2852,7 +2930,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The avarage batch size of BatchWriteItem",
             "editable": true,
             "error": false,
@@ -2940,7 +3021,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -3023,7 +3107,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of items processed as a result of BatchGetItem",
             "editable": true,
             "error": false,
@@ -3111,7 +3198,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The avarage batch size of BatchGetItem",
             "editable": true,
             "error": false,
@@ -3199,7 +3289,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of items deleted by their TTL",
             "editable": true,
             "error": false,
@@ -3327,7 +3420,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -3410,7 +3506,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -3493,7 +3592,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -3577,7 +3679,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -3706,7 +3811,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -3789,7 +3897,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -3872,7 +3983,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -3955,7 +4069,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4082,7 +4199,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4165,7 +4285,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4248,7 +4371,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4332,7 +4458,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4461,7 +4590,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4544,7 +4676,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4627,7 +4762,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4710,7 +4848,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4793,7 +4934,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -4934,7 +5078,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of rows that were read from the cache, without needing to be fetched from storage.",
             "editable": true,
             "error": false,
@@ -5018,7 +5165,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of rows that were not present in the cache, and had to be fetched from storage.",
             "editable": true,
             "error": false,
@@ -5102,7 +5252,10 @@
         },
         {
             "class": "wpm_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Requests that Scylla tried to write but timed out. Timeouts are counted in the node that received the request (the coordinator), not at the replicas.",
             "editable": true,
             "error": false,
@@ -5183,7 +5336,10 @@
         },
         {
             "class": "rpm_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Requests that Scylla tried to read but timed out. Timeouts are counted in the node that received the request (the coordinator), not at the replicas.",
             "editable": true,
             "error": false,
@@ -5264,7 +5420,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The current number of opened connections",
             "editable": true,
             "error": false,
@@ -5345,7 +5504,10 @@
         },
         {
             "class": "rpm_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Rate of new HTTP connections creation. High number may indicate a problem",
             "editable": true,
             "error": false,
@@ -5458,7 +5620,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -5533,7 +5698,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -5696,7 +5864,10 @@
                     "text": "None",
                     "value": ""
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -5728,7 +5899,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -5760,7 +5934,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -5792,7 +5969,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -5819,7 +5999,10 @@
                     "text": "/var/lib/scylla",
                     "value": "/var/lib/scylla"
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -6061,7 +6244,10 @@
                 "dashversion": [
                     "<2025.3"
                 ],
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -6083,7 +6269,10 @@
             },
             {
                 "allValue": null,
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "scylla_alternator_total_operations{cluster=~\"$cluster|$^\"}",
                 "description": null,
                 "error": null,

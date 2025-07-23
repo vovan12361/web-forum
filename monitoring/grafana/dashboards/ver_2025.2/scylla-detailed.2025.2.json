@@ -16,7 +16,10 @@
             },
             {
                 "class": "annotation_restart",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "resets(scylla_gossip_heart_beat{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -31,7 +34,10 @@
             },
             {
                 "class": "annotation_stall",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_stall_detector_reported{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -46,7 +52,10 @@
             },
             {
                 "class": "annotation_schema_changed",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_database_schema_changed{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -61,7 +70,10 @@
             },
             {
                 "class": "annotation_manager_task",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "scylla_manager_task_active_count{type=~\"repair|backup\",cluster=\"$cluster\"}>0",
                 "hide": false,
@@ -76,7 +88,10 @@
             },
             {
                 "class": "annotation_hints_writes",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_hints_manager_written{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -91,7 +106,10 @@
             },
             {
                 "class": "annotation_hints_sent",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": false,
                 "expr": "changes(scylla_hints_manager_sent{cluster=\"$cluster\"}[$__rate_interval])>0",
                 "hide": false,
@@ -106,7 +124,10 @@
             },
             {
                 "class": "mv_building",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "sum(scylla_view_builder_builds_in_progress{cluster=\"$cluster\"})>0",
                 "hide": false,
@@ -121,7 +142,10 @@
             },
             {
                 "class": "ops_annotation",
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "10*min(scylla_node_ops_finished_percentage{cluster=\"$cluster\"}) by (ops, dc,instance) < 10",
                 "hide": false,
@@ -140,7 +164,10 @@
                     ">5.2",
                     ">2023.1"
                 ],
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "enable": true,
                 "expr": "10*min(scylla_streaming_finished_percentage{cluster=\"$cluster\"}) by (ops, dc,instance) < 10",
                 "hide": false,
@@ -205,7 +232,10 @@
         },
         {
             "class": "percent_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The percentage of the time during which Scylla utilized the CPU. Note that because Scylla does busy polling for some time before going idle, CPU utilization as seen by the operating system may be much higher. Your system is not yet CPU-bottlenecked until this metric is high.",
             "editable": true,
             "error": false,
@@ -289,7 +319,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Amount of requests served as the coordinator. Imbalances here represent dispersion at the connection level, not your data model.",
             "editable": true,
             "error": false,
@@ -374,7 +407,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts the total number of successful user reads on this shard.",
             "editable": true,
             "error": false,
@@ -455,7 +491,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts the total number of successful write operations performed by this shard.",
             "editable": true,
             "error": false,
@@ -537,7 +576,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -630,7 +672,10 @@
             "panels": [
                 {
                     "class": "heatmap_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "editable": true,
                     "error": false,
                     "fieldConfig": {
@@ -722,7 +767,10 @@
                 },
                 {
                     "class": "barchart_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "editable": true,
                     "error": false,
                     "fieldConfig": {
@@ -810,7 +858,10 @@
                 },
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "node load during last load balancing\n\nscylla_load_balancer_load",
                     "editable": true,
                     "error": false,
@@ -942,7 +993,10 @@
         },
         {
             "class": "writes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Foreground writes are writes that weren't acknowledged yet to the application. For instance, if a single replica responded and two are needed due to the consistency level. This metric represents a queue size, not a rate. High values here correlate with increased write latencies.",
             "editable": true,
             "error": false,
@@ -1023,7 +1077,10 @@
         },
         {
             "class": "writes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Background writes are writes that are already acknowledged to the application but have additional work to be done. For instance, if a replica responded and only one is needed, this request is still listed as a background request until all replicas respond. This metric represents a queue size, not a rate. High values here correlate with increased write latencies.",
             "editable": true,
             "error": false,
@@ -1104,7 +1161,10 @@
         },
         {
             "class": "reads_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Foreground reads are reads that weren't acknowledged yet to the application. For instance, if a single replica responded and two are needed due to the consistency level. This metric represents a queue size, not a rate. High values here correlate with increased read latencies.",
             "editable": true,
             "error": false,
@@ -1186,7 +1246,10 @@
         },
         {
             "class": "reads_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Background reads are reads that are already acknowledged to the application but have additional work to be done. For instance, if a replica responded and only one is needed, this request is still listed as a background request until all replicas respond. This metric represents a queue size, not a rate. High values here correlate with increased read latencies.",
             "editable": true,
             "error": false,
@@ -1267,7 +1330,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of successfully written hints.",
             "editable": true,
             "error": false,
@@ -1348,7 +1414,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of sent hints.",
             "editable": true,
             "error": false,
@@ -1432,7 +1501,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of times a digest read was done on behalf of a speculative retry.\n\nSpeculative retry is a mechanism that causes the client or server to speculate that a request may fail, and send a new request.\n\nspeculative retry may reduce latency in exchange for system load, but only if there is little activity.\n\nA lot of speculative retries increases load and can harm latency more than helping.",
             "editable": true,
             "error": false,
@@ -1513,7 +1585,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of times a read was done on behalf of a speculative retry.\n\nSpeculative retry is a mechanism that causes the client or server to speculate that a request may fail, and send a new request.\n\nspeculative retry may reduce latency in exchange for system load, but only if there is little activity.\n\nA lot of speculative retries increases load and can harm latency more than helping.",
             "editable": true,
             "error": false,
@@ -1594,7 +1669,10 @@
         },
         {
             "class": "requestsps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds an incrementing counter with the requests that were shed due to overload (threshold configured via max_concurrent_requests_per_shard). The first derivative of this value shows how often we shed requests due to overload in the \"CQL transport\" component.",
             "editable": true,
             "error": false,
@@ -1691,7 +1769,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "writes rate",
             "editable": true,
             "error": false,
@@ -1772,7 +1853,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The average write latency",
             "editable": true,
             "error": false,
@@ -1863,7 +1947,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The 95th percentile write latency",
             "editable": true,
             "error": false,
@@ -1955,7 +2042,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "99th percentile write latency",
             "editable": true,
             "error": false,
@@ -2047,7 +2137,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Reads rate",
             "editable": true,
             "error": false,
@@ -2128,7 +2221,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Average read latency",
             "editable": true,
             "error": false,
@@ -2219,7 +2315,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "95th percentile read latency",
             "editable": true,
             "error": false,
@@ -2311,7 +2410,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "99th percentile read latency",
             "editable": true,
             "error": false,
@@ -2448,7 +2550,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Requests that Scylla tried to write but timed out. Timeouts are counted in the node that received the request (the coordinator), not at the replicas.",
             "editable": true,
             "error": false,
@@ -2529,7 +2634,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Requests that Scylla did not even try to write because replicas that were needed to execute this write were unavailable. Unavailable writes are counted in the node that received the request (the coordinator), not at the replicas.",
             "editable": true,
             "error": false,
@@ -2610,7 +2718,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Requests that Scylla tried to read but timed out. Timeouts are counted in the node that received the request (the coordinator), not at the replicas.",
             "editable": true,
             "error": false,
@@ -2705,7 +2816,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Requests that Scylla did not even try to read because replicas that were needed to execute this write were unavailable. Unavailable reads are counted in the node that received the request (the coordinator), not at the replicas.",
             "editable": true,
             "error": false,
@@ -2832,7 +2946,10 @@
         },
         {
             "class": "reads_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of currently active read operations",
             "editable": true,
             "error": false,
@@ -2913,7 +3030,10 @@
         },
         {
             "class": "reads_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "number of currently queued read operations",
             "editable": true,
             "error": false,
@@ -2994,7 +3114,10 @@
         },
         {
             "class": "writes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The current number of requests blocked due to reaching the memory quota. Non-zero value indicates that our bottleneck is memory",
             "editable": true,
             "error": false,
@@ -3075,7 +3198,10 @@
         },
         {
             "class": "writes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "number of currently pending allocations. A non-zero value indicates that we have a bottleneck in the disk write flow.",
             "editable": true,
             "error": false,
@@ -3156,7 +3282,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Reciprocal Miss Rate is a score in the range of 1 to 100 that is used to decide the fraction of read requests to send to each replica - a replica with twice the RMR value of another replica will serve twice the number of read requests.\n\nRMR is calculated on a table level, this is an aggregate estimation of that score.",
             "editable": true,
             "error": false,
@@ -3237,7 +3366,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts the total number of failed user read operations. Add the total_reads to this value to get the total amount of reads issued on this shard.",
             "editable": true,
             "error": false,
@@ -3318,7 +3450,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds the current number of requests blocked due to reaching the memory quota (15566635008B). Non-zero value indicates that our bottleneck is memory and more specifically - the memory quota allocated for the \"database\" component.",
             "editable": true,
             "error": false,
@@ -3399,7 +3534,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts number of requests blocked due to memory pressure. A non-zero value indicates that the commitlog memory quota is not enough to serve the required amount of requests.",
             "editable": true,
             "error": false,
@@ -3483,7 +3621,10 @@
             "dashversion": [
                 ">2024.1"
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Data compression percentage by using compressed algorithm\n\nscylla_rpc_compression_compressed_bytes_sent",
             "editable": true,
             "error": false,
@@ -3568,7 +3709,10 @@
             "dashversion": [
                 ">2024.1"
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Bytes sent using compressed algorithm\n\nscylla_rpc_compression_compressed_bytes_sent",
             "editable": true,
             "error": false,
@@ -3655,7 +3799,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts the total number of failed write operations. A sum of this value plus total_writes represents a total amount of writes attempted on this shard.",
             "editable": true,
             "error": false,
@@ -3736,7 +3883,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts write operations failed due to a timeout. A positive value is a sign of storage being overloaded.",
             "editable": true,
             "error": false,
@@ -3833,7 +3983,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of sstables currently open for reading \n\nscylla_sstables_currently_open_for_reading",
             "editable": true,
             "error": false,
@@ -3914,7 +4067,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of sstables read\n\nscylla_database_sstables_read",
             "editable": true,
             "error": false,
@@ -3995,7 +4151,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Number of sstables disk reads\n\nscylla_database_disk_reads",
             "editable": true,
             "error": false,
@@ -4088,7 +4247,10 @@
             "panels": [
                 {
                     "class": "bytes_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "S3 Writes, bytes rate \n\nscylla_s3_total_write_bytes",
                     "editable": true,
                     "error": false,
@@ -4169,7 +4331,10 @@
                 },
                 {
                     "class": "seconds_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "S3 Writes latency\n\nscylla_s3_total_write_latency_sec",
                     "editable": true,
                     "error": false,
@@ -4250,7 +4415,10 @@
                 },
                 {
                     "class": "bytes_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "S3 reads, bytes rate \n\nscylla_s3_total_read_bytes",
                     "editable": true,
                     "error": false,
@@ -4331,7 +4499,10 @@
                 },
                 {
                     "class": "seconds_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "S3 reads latency\n\nscylla_s3_total_read_latency_sec",
                     "editable": true,
                     "error": false,
@@ -4462,7 +4633,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "number of reads that were served from the cache",
             "editable": true,
             "error": false,
@@ -4543,7 +4717,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "number of reads which had to read from sstables",
             "editable": true,
             "error": false,
@@ -4624,7 +4801,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of rows needed by reads and found in cache",
             "editable": true,
             "error": false,
@@ -4708,7 +4888,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of rows needed by reads and missing in cache",
             "editable": true,
             "error": false,
@@ -4792,7 +4975,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "number of partitions needed by reads and found in cache",
             "editable": true,
             "error": false,
@@ -4876,7 +5062,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "number of partitions needed by reads and missing in cache",
             "editable": true,
             "error": false,
@@ -4960,7 +5149,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of rows added to cache",
             "editable": true,
             "error": false,
@@ -5044,7 +5236,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of rows evicted from cache",
             "editable": true,
             "error": false,
@@ -5128,7 +5323,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of partitions added to cache",
             "editable": true,
             "error": false,
@@ -5212,7 +5410,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of evicted partitions",
             "editable": true,
             "error": false,
@@ -5296,7 +5497,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of rows in memtables which were merged with existing rows during cache update on memtable flush",
             "editable": true,
             "error": false,
@@ -5380,7 +5584,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of invalidated rows",
             "editable": true,
             "error": false,
@@ -5464,7 +5671,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of partitions merged",
             "editable": true,
             "error": false,
@@ -5548,7 +5758,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of invalidated partitions",
             "editable": true,
             "error": false,
@@ -5632,7 +5845,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of cached rows",
             "editable": true,
             "error": false,
@@ -5713,7 +5929,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total number of cached partitions",
             "editable": true,
             "error": false,
@@ -5794,7 +6013,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "current bytes used by the cache out of the total size of memory",
             "editable": true,
             "error": false,
@@ -5875,7 +6097,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "total size of memory for the cache",
             "editable": true,
             "error": false,
@@ -5956,7 +6181,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts the number of prepared statements cache entries evictions.",
             "editable": true,
             "error": false,
@@ -6037,7 +6265,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts the number of authenticated prepared statements cache entries evictions.",
             "editable": true,
             "error": false,
@@ -6118,7 +6349,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The number of entries currently in the querier cache.\n\nscylla_database_querier_cache_population",
             "editable": true,
             "error": false,
@@ -6199,7 +6433,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts querier cache lookups (paging queries)\n\nscylla_database_querier_cache_lookups",
             "editable": true,
             "error": false,
@@ -6283,7 +6520,10 @@
         },
         {
             "class": "ops_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Counts querier cache lookups that failed to find a cached querier\n\nscylla_database_querier_cache_misses",
             "editable": true,
             "error": false,
@@ -6408,7 +6648,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Counts the number of view updates generated locally and applied on the same node",
                     "editable": true,
                     "error": false,
@@ -6489,7 +6732,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Counts the number of view updates generated and then sent to be applied on a remote replica",
                     "editable": true,
                     "error": false,
@@ -6570,7 +6816,10 @@
                 },
                 {
                     "class": "bytes_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Size in bytes of the view update backlog at each base replica.",
                     "editable": true,
                     "error": false,
@@ -6651,7 +6900,10 @@
                 },
                 {
                     "class": "ops_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of dropped view updates due to an excessive view update backlog.",
                     "editable": true,
                     "error": false,
@@ -6735,7 +6987,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of hints sent for view.",
                     "editable": true,
                     "error": false,
@@ -6816,7 +7071,10 @@
                 },
                 {
                     "class": "writes_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Currently throttled base writes, as a consequence of the respective view update backlog.",
                     "editable": true,
                     "error": false,
@@ -6914,7 +7172,10 @@
             "panels": [
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Amount of range tombstones processed during read.",
                     "editable": true,
                     "error": false,
@@ -6995,7 +7256,10 @@
                 },
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Amount of range tombstones processed during read.",
                     "editable": true,
                     "error": false,
@@ -7076,7 +7340,10 @@
                 },
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Amount of row tombstones read",
                     "editable": true,
                     "error": false,
@@ -7157,7 +7424,10 @@
                 },
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Amount of cache row tombstones read",
                     "editable": true,
                     "error": false,
@@ -7238,7 +7508,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "The number of tombstones found in SSTables. This number is updated by an SSTable update after flush, compaction, or streaming operations.",
                     "editable": true,
                     "error": false,
@@ -7319,7 +7592,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "The number of range tombstones found in SSTables. This number is updated by an SSTable update after flush, compaction, or streaming operations.",
                     "editable": true,
                     "error": false,
@@ -7400,7 +7676,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "The number of Cell Tombstones found in SSTables. This number is updated by an SSTable update after flush, compaction, or streaming operations.",
                     "editable": true,
                     "error": false,
@@ -7527,7 +7806,10 @@
                 },
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "LWT read rate.",
                     "editable": true,
                     "error": false,
@@ -7608,7 +7890,10 @@
                 },
                 {
                     "class": "us_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "LWT Average Read latency.",
                     "editable": true,
                     "error": false,
@@ -7692,7 +7977,10 @@
                 },
                 {
                     "class": "us_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "LWT 95% Read latency.",
                     "editable": true,
                     "error": false,
@@ -7776,7 +8064,10 @@
                 },
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "LWT Read Timeouts",
                     "editable": true,
                     "error": false,
@@ -7857,7 +8148,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "LWT write rate.",
                     "editable": true,
                     "error": false,
@@ -7938,7 +8232,10 @@
                 },
                 {
                     "class": "us_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "LWT Average Write latency.",
                     "editable": true,
                     "error": false,
@@ -8022,7 +8319,10 @@
                 },
                 {
                     "class": "us_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "LWT 95% write latency.",
                     "editable": true,
                     "error": false,
@@ -8106,7 +8406,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "LWT Write Timeouts",
                     "editable": true,
                     "error": false,
@@ -8187,7 +8490,10 @@
                 },
                 {
                     "class": "ops_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "A single Read/Write LWT will result in multiple paxos operations",
                     "editable": true,
                     "error": false,
@@ -8271,7 +8577,10 @@
                 },
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "How many paxos operations that did not yet produce a result are running",
                     "editable": true,
                     "error": false,
@@ -8352,7 +8661,10 @@
                 },
                 {
                     "class": "graph_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "How many paxos operations are still running after a result was already returned",
                     "editable": true,
                     "error": false,
@@ -8462,7 +8774,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "An LWT INSERT, UPDATE or DELETE command that involves a condition will be rejected if the condition is not met.\n\nWhile it is ok, a high value may indicate that there is a potential problem with data distribution",
                     "editable": true,
                     "error": false,
@@ -8543,7 +8858,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of times some INSERT, UPDATE or DELETE request with conditions had to retry because there was a concurrent conditional statement against the same key. Each retry is performed after a randomized sleep interval, so it can lead to statement timing out completely.\n\nIt can indicates contention over a hot row or key",
                     "editable": true,
                     "error": false,
@@ -8624,7 +8942,10 @@
                 },
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of times some SELECT with SERIAL consistency had to retry because there was a concurrent conditional statement against the same key. Each retry is performed after a randomized sleep interval, so it can lead to statement timing out completely.\n\nIt can indicates contention over a hot row or key",
                     "editable": true,
                     "error": false,
@@ -8705,7 +9026,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of partially succeeded conditional statements. These statements were not committed by the coordinator, due to some replicas responding with errors or timing out. The coordinator had to propagate the error to the client. However, the statement succeeded on a minority of replicas, so may later be propagated to the rest during repair.",
                     "editable": true,
                     "error": false,
@@ -8786,7 +9110,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of times a INSERT, UPDATE, or DELETE with conditions failed after being unable to contact enough replicas to match the consistency level",
                     "editable": true,
                     "error": false,
@@ -8867,7 +9194,10 @@
                 },
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of times a SELECT with SERIAL consistency failed after being unable to contact enough replicas to match the consistency level",
                     "editable": true,
                     "error": false,
@@ -8948,7 +9278,10 @@
                 },
                 {
                     "class": "wps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of Paxos-repairs of INSERT, UPDATE, or DELETE with conditions.\n\nA repair is necessary when a previous Paxos statement was partially successful. A subsequent statement then may not proceed before completing the work of its predecessor. A repair is not guaranteed to succeed, the metric indicates the number of repair attempts made",
                     "editable": true,
                     "error": false,
@@ -9029,7 +9362,10 @@
                 },
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of Paxos-repairs of SELECT statement with SERIAL consistency.\n\nA repair is necessary when a previous Paxos statement was partially successful. A subsequent statement then may not proceed before completing the work of its predecessor. A repair is not guaranteed to succeed, the metric indicates the number of repair attempts made",
                     "editable": true,
                     "error": false,
@@ -9110,7 +9446,10 @@
                 },
                 {
                     "class": "rps_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Normally, a PREPARE Paxos-round piggy-backs the previous value along with the PREPARE response. When the coordinator is unable to obtain the previous value (or its digest) from some of the participants, or when the digests did not match, a separate repair round has to be performed.\n\nThis indicates that some Paxos queries did not run successfully to completion, e.g. because some node is overloaded, down, or there was contention around a key.",
                     "editable": true,
                     "error": false,
@@ -9191,7 +9530,10 @@
                 },
                 {
                     "class": "ops_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of pruning requests.\n\nA successful conditional statement deletes the intermediate state from system.paxos table using PRUNE command.",
                     "editable": true,
                     "error": false,
@@ -9275,7 +9617,10 @@
                 },
                 {
                     "class": "ops_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "Number of Dropped pruning requests.\n\nA successful conditional statement deletes the intermediate state from system.paxos table using PRUNE command. If the system is busy it may not keep up with the PRUNE requests, so such requests are dropped.\n\nHigh value suggests the system is overloaded and also that system.paxos table is taking up space. If a prune is dropped, system.paxos table key and value for respective LWT transaction  will stay around until next transaction against the same key or until the gc_grace_period, when it's removed by compaction.",
                     "editable": true,
                     "error": false,
@@ -9405,7 +9750,10 @@
                 },
                 {
                     "class": "ops_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "The rate of CDC operations.",
                     "editable": true,
                     "error": false,
@@ -9489,7 +9837,10 @@
                 },
                 {
                     "class": "ops_panel",
-                    "datasource": "prometheus",
+                    "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                     "description": "The rate of failed CDC operations.",
                     "editable": true,
                     "error": false,
@@ -9623,7 +9974,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds a current size of allocated memory in bytes.",
             "editable": true,
             "error": false,
@@ -9704,7 +10058,10 @@
         },
         {
             "class": "bytes_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds a current amount of used non-LSA memory.",
             "editable": true,
             "error": false,
@@ -9785,7 +10142,10 @@
         },
         {
             "class": "percentunit_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Bloom filter should take a small percentage of the total memory.\n\nscylla_sstables_bloom_filter_memory_size",
             "editable": true,
             "error": false,
@@ -9912,7 +10272,10 @@
         },
         {
             "class": "graph_panel_int",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Holds the number of currently active compactions.",
             "editable": true,
             "error": false,
@@ -9994,7 +10357,10 @@
         },
         {
             "class": "percent_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Percentage of CPU time used by compaction",
             "editable": true,
             "error": false,
@@ -10079,7 +10445,10 @@
         },
         {
             "class": "graph_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Shares assigned to the compaction",
             "editable": true,
             "error": false,
@@ -10175,7 +10544,10 @@
         },
         {
             "class": "wps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The general write latency histogram",
             "editable": true,
             "error": false,
@@ -10256,7 +10628,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -10346,7 +10721,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -10437,7 +10815,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -10528,7 +10909,10 @@
         },
         {
             "class": "rps_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "The general read latency histogram",
             "editable": true,
             "error": false,
@@ -10609,7 +10993,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -10699,7 +11086,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -10790,7 +11180,10 @@
         },
         {
             "class": "us_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "editable": true,
             "error": false,
             "fieldConfig": {
@@ -10885,7 +11278,10 @@
                 ">5.3",
                 ">2022.1"
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Bytes received in CQL messages",
             "editable": true,
             "error": false,
@@ -10971,7 +11367,10 @@
                 ">5.3",
                 ">2022.1"
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Average CQL message size (received)",
             "editable": true,
             "error": false,
@@ -11057,7 +11456,10 @@
                 ">5.3",
                 ">2022.1"
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Bytes sent in CQL messages",
             "editable": true,
             "error": false,
@@ -11143,7 +11545,10 @@
                 ">5.3",
                 ">2022.1"
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "Average CQL message size (sent)",
             "editable": true,
             "error": false,
@@ -11229,7 +11634,10 @@
                 ">5.3",
                 ">2022.1"
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This is a ballpark estimation of the write-messages size (like insert and update).\n\nIt is based on the assumption that write-messages are responsible for most inwards traffic.",
             "editable": true,
             "error": false,
@@ -11315,7 +11723,10 @@
                 ">5.3",
                 ">2022.1"
             ],
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This is a ballpark estimation of the read-messages size (like select).\n\nIt is based on the assumption that read-messages are responsible for most outbound traffic.",
             "editable": true,
             "error": false,
@@ -11445,7 +11856,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -11520,7 +11934,10 @@
         },
         {
             "class": "user_panel",
-            "datasource": "prometheus",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
             "description": "This graph panel was left empty on purpose for ad-hoc usage. Change it when needed. Pay attention that changes to the panel will not be saved.\n\nIf you do need a panel that can be saved, create a new dashboard, or edit the panel inside the json file",
             "editable": true,
             "error": false,
@@ -11683,7 +12100,10 @@
                     "text": "None",
                     "value": ""
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -11715,7 +12135,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -11747,7 +12170,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -11779,7 +12205,10 @@
                         "$__all"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -11814,7 +12243,10 @@
                         "statement"
                     ]
                 },
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
@@ -11850,7 +12282,10 @@
                     ">5.3",
                     ">2022.1"
                 ],
-                "datasource": "prometheus",
+                "datasource": {
+                "type": "prometheus",
+                "uid": "PBFA97CFB590B2093"
+            },
                 "definition": "",
                 "error": null,
                 "hide": 0,
