@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use utoipa::ToSchema;
 
-#[derive(Debug, Serialize, Deserialize, ToSchema)]
+#[derive(Clone, Debug, Serialize, Deserialize, ToSchema)]
 pub struct Board {
     pub id: Uuid,
     pub name: String,
@@ -24,6 +24,7 @@ pub struct Post {
     pub title: String,
     pub content: String,
     pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
     pub author: String,
 }
 
@@ -58,3 +59,4 @@ pub struct HealthResponse {
     pub version: String,
     pub timestamp: DateTime<Utc>,
 }
+

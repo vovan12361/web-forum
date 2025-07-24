@@ -39,6 +39,7 @@ pub async fn init_db(session: &Session) -> Result<(), Box<dyn std::error::Error>
             title TEXT,
             content TEXT,
             created_at BIGINT,
+            updated_at BIGINT,
             author TEXT
         ) WITH compaction = {'class': 'LeveledCompactionStrategy'}
         AND compression = {'sstable_compression': 'LZ4Compressor'}

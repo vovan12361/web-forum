@@ -45,7 +45,7 @@ impl<T> CacheEntry<T> {
 
 // In-memory cache for frequently accessed data
 pub type BoardsCache = Arc<RwLock<HashMap<String, CacheEntry<Vec<Board>>>>>;
-pub type PostsCache = Arc<RwLock<HashMap<Uuid, CacheEntry<Vec<Post>>>>>;
+pub type PostsCache = Arc<RwLock<HashMap<String, CacheEntry<Vec<Post>>>>>;
 
 // Prepared statements for better performance
 pub struct PreparedStatements {
@@ -62,6 +62,11 @@ pub struct PreparedStatements {
 static PREPARED_STATEMENTS: OnceLock<PreparedStatements> = OnceLock::new();
 static BOARDS_CACHE: OnceLock<BoardsCache> = OnceLock::new();
 static POSTS_CACHE: OnceLock<PostsCache> = OnceLock::new();
+
+// Individual prepared statement references for easier access
+static CREATE_BOARD_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+static GET_BOARDS_STMT: OnceLock<PreparedStatement> = OnceLock::new();
+static GET_BOARD_STMT: OnceLock<PreparedStatement> = OnceLock::new();
 
 // Prometheus metrics
 static METRICS_REGISTRY: OnceLock<Registry> = OnceLock::new();
@@ -176,12 +181,17 @@ pub async fn init_prepared_statements(session: &Session) -> Result<(), Box<dyn s
         get_boards: session.prepare("SELECT id, name, description, created_at FROM boards").await?,
         get_board_by_id: session.prepare("SELECT id, name, description, created_at FROM boards WHERE id = ?").await?,
         create_board: session.prepare("INSERT INTO boards (id, name, description, created_at) VALUES (?, ?, ?, ?)").await?,
-        get_posts_by_board: session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE board_id = ? ORDER BY created_at DESC").await?,
+        get_posts_by_board: session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE board_id = ? ALLOW FILTERING").await?,
         get_post_by_id: session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE id = ?").await?,
         create_post: session.prepare("INSERT INTO posts (id, board_id, title, content, author, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)").await?,
-        get_comments_by_post: session.prepare("SELECT id, post_id, content, author, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC").await?,
+        get_comments_by_post: session.prepare("SELECT id, post_id, content, author, created_at FROM comments WHERE post_id = ? ALLOW FILTERING").await?,
         create_comment: session.prepare("INSERT INTO comments (id, post_id, content, author, created_at) VALUES (?, ?, ?, ?, ?)").await?,
     };
+    
+    // Set individual statements for easier access
+    CREATE_BOARD_STMT.set(prepared.create_board.clone()).map_err(|_| "Failed to set create board statement")?;
+    GET_BOARDS_STMT.set(prepared.get_boards.clone()).map_err(|_| "Failed to set get boards statement")?;
+    GET_BOARD_STMT.set(prepared.get_board_by_id.clone()).map_err(|_| "Failed to set get board statement")?;
     
     PREPARED_STATEMENTS.set(prepared).map_err(|_| "Failed to set prepared statements")?;
     BOARDS_CACHE.set(Arc::new(RwLock::new(HashMap::new()))).map_err(|_| "Failed to set boards cache")?;
@@ -327,10 +337,8 @@ pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
                     .collect();
 
                 // Update cache
-                if let Some(mut cache) = BOARDS_CACHE.get().unwrap().write().await.get_mut("all_boards") {
-                    cache.data = boards.clone();
-                    cache.timestamp = Instant::now(); // Reset cache timestamp
-                }
+                let cache_entry = CacheEntry::new(boards.clone(), Duration::from_secs(300)); // 5 minutes TTL
+                BOARDS_CACHE.get().unwrap().write().await.insert("all_boards".to_string(), cache_entry);
 
                 info!("Successfully fetched {} boards (duration: {}ms)", boards.len(), duration.as_millis());
                 HttpResponse::Ok()
@@ -342,7 +350,6 @@ pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
                 HttpResponse::InternalServerError().body(format!("Error fetching boards: {}", e))
             },
         }
-    })
 }
 
 /// Get board by ID
@@ -373,7 +380,8 @@ pub async fn get_board(
     info!("Fetching board with ID: {}", board_id);
         
         // Check cache first
-        if let Some(cached_board) = BOARDS_CACHE.get().unwrap().read().await.get(&board_id.to_string()) {
+        let board_cache_key = board_id.to_string();
+        if let Some(cached_board) = BOARDS_CACHE.get().unwrap().read().await.get(&board_cache_key) {
             if !cached_board.is_expired() {
                 info!("Cache hit for board ID: {}", board_id);
                 return HttpResponse::Ok().json(cached_board.get_data());
@@ -418,10 +426,8 @@ pub async fn get_board(
                         };
                         
                         // Update cache
-                        if let Some(mut cache) = BOARDS_CACHE.get().unwrap().write().await.get_mut(&board_id.to_string()) {
-                            cache.data = board.clone();
-                            cache.timestamp = Instant::now(); // Reset cache timestamp
-                        }
+                        let cache_entry = CacheEntry::new(vec![board.clone()], Duration::from_secs(300)); // 5 minutes TTL
+                        BOARDS_CACHE.get().unwrap().write().await.insert(board_cache_key, cache_entry);
 
                         info!("Board found: {}", board.name);
                         return HttpResponse::Ok().json(board);
@@ -502,12 +508,14 @@ pub async fn create_post(
         }
     }
     
+    let now = Utc::now();
     let post = Post {
         id: Uuid::new_v4(),
         board_id: post_data.board_id,
         title: post_data.title.clone(),
         content: post_data.content.clone(),
-        created_at: Utc::now(),
+        created_at: now,
+        updated_at: now,
         author: post_data.author.clone(),
     };
     
@@ -532,7 +540,7 @@ pub async fn create_post(
     let result = session
         .execute(
             &prepared,
-            (post.id, post.board_id, &post.title, &post.content, post.created_at.timestamp_millis(), &post.author),
+            (post.id, post.board_id, &post.title, &post.content, &post.author, post.created_at.timestamp_millis(), post.updated_at.timestamp_millis()),
         )
         .await;
 
@@ -579,7 +587,8 @@ pub async fn get_posts_by_board(
     let board_id = path.into_inner();
     
     // Check cache first
-    if let Some(cached_posts) = POSTS_CACHE.get().unwrap().read().await.get(&board_id) {
+    let posts_cache_key = board_id.to_string();
+    if let Some(cached_posts) = POSTS_CACHE.get().unwrap().read().await.get(&posts_cache_key) {
         if !cached_posts.is_expired() {
             info!("Cache hit for posts by board ID: {}", board_id);
             return HttpResponse::Ok().json(cached_posts.get_data());
@@ -592,7 +601,7 @@ pub async fn get_posts_by_board(
     
     let start = Instant::now();
     
-    let prepared = match session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE board_id = ? ORDER BY created_at DESC ALLOW FILTERING").await {
+    let prepared = match session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE board_id = ? ALLOW FILTERING").await {
         Ok(p) => p,
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
@@ -618,10 +627,16 @@ pub async fn get_posts_by_board(
                     let board_id = row.columns[1].as_ref()?.as_uuid()?;
                     let title = row.columns[2].as_ref()?.as_text()?.to_string();
                     let content = row.columns[3].as_ref()?.as_text()?.to_string();
-                    let author = row.columns[5].as_ref()?.as_text()?.to_string();
+                    let author = row.columns[4].as_ref()?.as_text()?.to_string();
                     
                     // Handle bigint timestamps from database
-                    let created_at = if let Some(millis) = row.columns[4].as_ref().and_then(|c| c.as_bigint()) {
+                    let created_at = if let Some(millis) = row.columns[5].as_ref().and_then(|c| c.as_bigint()) {
+                        Utc.timestamp_millis_opt(millis).single()?
+                    } else {
+                        return None;
+                    };
+
+                    let updated_at = if let Some(millis) = row.columns[6].as_ref().and_then(|c| c.as_bigint()) {
                         Utc.timestamp_millis_opt(millis).single()?
                     } else {
                         return None;
@@ -633,16 +648,19 @@ pub async fn get_posts_by_board(
                         title,
                         content,
                         created_at,
+                        updated_at,
                         author,
                     })
                 })
                 .collect();
 
+            // Sort posts by created_at in descending order (newest first)
+            let mut posts = posts;
+            posts.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+
             // Update cache
-            if let Some(mut cache) = POSTS_CACHE.get().unwrap().write().await.get_mut(&board_id) {
-                cache.data = posts.clone();
-                cache.timestamp = Instant::now(); // Reset cache timestamp
-            }
+            let cache_entry = CacheEntry::new(posts.clone(), Duration::from_secs(300)); // 5 minutes TTL
+            POSTS_CACHE.get().unwrap().write().await.insert(posts_cache_key, cache_entry);
 
             HttpResponse::Ok()
                 .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
@@ -681,10 +699,13 @@ pub async fn get_post(
     let post_id = path.into_inner();
     
     // Check cache first
-    if let Some(cached_post) = POSTS_CACHE.get().unwrap().read().await.get(&post_id) {
+    let post_cache_key = format!("post_{}", post_id);
+    if let Some(cached_post) = POSTS_CACHE.get().unwrap().read().await.get(&post_cache_key) {
         if !cached_post.is_expired() {
             info!("Cache hit for post ID: {}", post_id);
-            return HttpResponse::Ok().json(cached_post.get_data());
+            if let Some(post) = cached_post.get_data().first() {
+                return HttpResponse::Ok().json(post);
+            }
         } else {
             info!("Cache expired for post ID: {}, fetching fresh data", post_id);
         }
@@ -715,10 +736,16 @@ pub async fn get_post(
                     let board_id_res = row.columns[1].as_ref().and_then(|c| c.as_uuid());
                     let title_res = row.columns[2].as_ref().and_then(|c| c.as_text());
                     let content_res = row.columns[3].as_ref().and_then(|c| c.as_text());
-                    let author_res = row.columns[5].as_ref().and_then(|c| c.as_text());
+                    let author_res = row.columns[4].as_ref().and_then(|c| c.as_text());
                     
                     // Handle bigint timestamps from database
-                    let created_at = if let Some(millis) = row.columns[4].as_ref().and_then(|c| c.as_bigint()) {
+                    let created_at = if let Some(millis) = row.columns[5].as_ref().and_then(|c| c.as_bigint()) {
+                        Utc.timestamp_millis_opt(millis).single().unwrap_or_else(|| Utc::now())
+                    } else {
+                        Utc::now()
+                    };
+
+                    let updated_at = if let Some(millis) = row.columns[6].as_ref().and_then(|c| c.as_bigint()) {
                         Utc.timestamp_millis_opt(millis).single().unwrap_or_else(|| Utc::now())
                     } else {
                         Utc::now()
@@ -733,14 +760,13 @@ pub async fn get_post(
                             title: title.to_string(),
                             content: content.to_string(),
                             created_at,
+                            updated_at,
                             author: author.to_string(),
                         };
                         
                         // Update cache
-                        if let Some(mut cache) = POSTS_CACHE.get().unwrap().write().await.get_mut(&post_id) {
-                            cache.data = post.clone();
-                            cache.timestamp = Instant::now(); // Reset cache timestamp
-                        }
+                        let cache_entry = CacheEntry::new(vec![post.clone()], Duration::from_secs(300)); // 5 minutes TTL
+                        POSTS_CACHE.get().unwrap().write().await.insert(post_cache_key, cache_entry);
 
                         return HttpResponse::Ok()
                             .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
@@ -873,7 +899,7 @@ pub async fn get_comments_by_post(
     
     let post_id = path.into_inner();
     
-    let prepared = match session.prepare("SELECT id, post_id, content, author, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC ALLOW FILTERING").await {
+    let prepared = match session.prepare("SELECT id, post_id, content, author, created_at FROM comments WHERE post_id = ? ALLOW FILTERING").await {
         Ok(p) => p,
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
@@ -917,6 +943,10 @@ pub async fn get_comments_by_post(
                 })
                 .collect();
 
+            // Sort comments by created_at in ascending order (oldest first)
+            let mut comments = comments;
+            comments.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+
             HttpResponse::Ok()
                 .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
                 .json(comments)
@@ -948,3 +978,4 @@ pub async fn slow_endpoint() -> impl Responder {
     info!("Slow endpoint completed");
     HttpResponse::Ok().body("This endpoint is intentionally slow")
 }
+
