@@ -1,5 +1,6 @@
-use actix_web::{get, post, web, HttpResponse, Responder};
+use actix_web::{get, post, web, HttpResponse, Responder, web::Query};
 use scylla::{Session, prepared_statement::PreparedStatement};
+use futures::stream::StreamExt;
 use chrono::{TimeZone, Utc};
 use uuid::Uuid;
 use std::time::{Instant, Duration};
@@ -9,12 +10,11 @@ use std::sync::OnceLock;
 use tracing::{info, warn, error, debug, instrument};
 use std::collections::HashMap;
 use tokio::sync::RwLock;
-
 use crate::models::{
     Board, CreateBoardRequest, 
     Post, CreatePostRequest, 
     Comment, CreateCommentRequest,
-    HealthResponse
+    HealthResponse, PaginationParams, PaginatedResponse, PaginationMeta
 };
 
 // Cache structure for performance optimization
@@ -263,94 +263,138 @@ pub async fn create_board(
         }
 }
 
-/// Get all boards
+/// Get all boards with pagination
 ///
-/// Returns a list of all discussion boards
+/// Returns a paginated list of all discussion boards
 #[utoipa::path(
     get,
     path = "/boards",
+    params(
+        ("page" = Option<u32>, Query, description = "Page number (starts at 1)", example = 1),
+        ("limit" = Option<u32>, Query, description = "Number of items per page", example = 10)
+    ),
     responses(
-        (status = 200, description = "List of boards retrieved successfully", body = Vec<Board>),
+        (status = 200, description = "Paginated list of boards retrieved successfully", body = PaginatedResponse<Board>),
         (status = 500, description = "Internal server error")
     )
 )]
 #[get("/boards")]
 #[instrument(name = "get_boards", skip(session))]
-pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
+pub async fn get_boards(
+    session: web::Data<Arc<Session>>,
+    pagination: Query<PaginationParams>,
+) -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
     REQUEST_COUNTER.get().unwrap().inc();
     
-    info!("Fetching all boards");
-    
+    let page = pagination.page.max(1); // Ensure page >= 1
+    let limit = pagination.limit.max(1).min(100); // Ensure 1 <= limit <= 100
+
+    info!("Fetching boards (page: {}, limit: {})", page, limit);
     let start = Instant::now();
-    
-    // Check cache first
-    if let Some(cached_boards) = BOARDS_CACHE.get().unwrap().read().await.get("all_boards") {
-        if !cached_boards.is_expired() {
-            info!("Cache hit for all boards");
-            return HttpResponse::Ok().json(cached_boards.get_data());
-        } else {
-            info!("Cache expired for all boards, fetching fresh data");
+
+    // Prepare statement with page size
+    let mut prepared = match session.prepare("SELECT id, name, description, created_at FROM boards").await {
+        Ok(stmt) => stmt,
+        Err(e) => {
+            let duration = start.elapsed().as_secs_f64();
+            HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+            return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
         }
-    } else {
-        info!("No cache entry for all boards, fetching data");
-    }
-    
-    // Use prepared statement for better performance
-    let result = if let Some(stmt) = GET_BOARDS_STMT.get() {
-        session.execute(stmt, &[]).await
-    } else {
-        // Fallback to regular query if prepared statement not ready
-        warn!("Prepared statement not available, using regular query");
-        session.query("SELECT id, name, description, created_at FROM boards", &[]).await
     };
     
-    let duration = start.elapsed();
-    
+    // Set page size for efficient pagination
+    prepared.set_page_size(limit as i32);
+
     DB_REQUEST_COUNTER.get().unwrap().inc();
     
-    match result {
-            Ok(rows) => {
-                let boards: Vec<Board> = rows
-                    .rows
-                    .unwrap_or_default()
-                    .into_iter()
-                    .filter_map(|row| {
-                        let id = row.columns[0].as_ref()?.as_uuid()?;
-                        let name = row.columns[1].as_ref()?.as_text()?.to_string();
-                        let description = row.columns[2].as_ref()?.as_text()?.to_string();
-                        
-                        // Handle bigint timestamps
-                        let created_at = if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
-                            Utc.timestamp_millis_opt(millis).single()?
-                        } else {
-                            return None;
-                        };
-
-                        Some(Board {
-                            id,
-                            name,
-                            description,
-                            created_at,
-                        })
-                    })
-                    .collect();
-
-                // Update cache
-                let cache_entry = CacheEntry::new(boards.clone(), Duration::from_secs(300)); // 5 minutes TTL
-                BOARDS_CACHE.get().unwrap().write().await.insert("all_boards".to_string(), cache_entry);
-
-                info!("Successfully fetched {} boards (duration: {}ms)", boards.len(), duration.as_millis());
-                HttpResponse::Ok()
-                    .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
-                    .json(boards)
-            }
-            Err(e) => {
-                error!("Error fetching boards: {}", e);
-                HttpResponse::InternalServerError().body(format!("Error fetching boards: {}", e))
-            },
+    // Use execute_iter for paginated results
+    let row_iterator = match session.execute_iter(prepared, &[]).await {
+        Ok(iterator) => iterator,
+        Err(e) => {
+            let duration = start.elapsed().as_secs_f64();
+            HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+            return HttpResponse::InternalServerError().body(format!("Error executing query: {}", e));
         }
+    };
+
+    let mut boards = Vec::new();
+    let mut total_fetched = 0u32;
+
+    // Skip to the requested page
+    let skip_count = (page - 1) * limit;
+    let mut skipped = 0u32;
+
+    // Convert iterator to stream and iterate through pages
+    let mut rows_stream = row_iterator.into_typed::<(uuid::Uuid, String, String, i64)>();
+    
+    while let Some(next_row_res) = rows_stream.next().await {
+        match next_row_res {
+            Ok((id, name, description, created_at_millis)) => {
+                // Skip rows until we reach the desired page
+                if skipped < skip_count {
+                    skipped += 1;
+                    continue;
+                }
+                
+                // Stop if we have enough items for this page
+                if total_fetched >= limit {
+                    break;
+                }
+
+                // Convert timestamp
+                let created_at = match Utc.timestamp_millis_opt(created_at_millis).single() {
+                    Some(dt) => dt,
+                    None => {
+                        warn!("Invalid timestamp for board {}: {}", id, created_at_millis);
+                        continue;
+                    }
+                };
+
+                boards.push(Board {
+                    id,
+                    name,
+                    description,
+                    created_at,
+                });
+
+                total_fetched += 1;
+            },
+            Err(e) => {
+                error!("Error reading row: {}", e);
+                let duration = start.elapsed().as_secs_f64();
+                HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+                return HttpResponse::InternalServerError().body(format!("Error reading row: {}", e));
+            }
+        }
+    }
+
+    let duration = start.elapsed();
+    HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
+
+    // For pagination metadata, we'll estimate total pages
+    // In a production system, you might want to maintain a separate count
+    let has_more = total_fetched == limit; // If we got a full page, there might be more
+    
+    let meta = PaginationMeta {
+        page,
+        limit,
+        total: None, // We don't have exact total count without additional query
+        total_pages: if has_more { None } else { Some(page) }, // If no more data, current page is last
+    };
+
+    let response = PaginatedResponse {
+        meta,
+        data: boards,
+    };
+
+    info!("Successfully fetched {} boards (page: {}, limit: {}, duration: {}ms)", response.data.len(), page, limit, duration.as_millis());
+    HttpResponse::Ok()
+        .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
+        .append_header(("X-Has-More", has_more.to_string()))
+        .json(response)
 }
+
 
 /// Get board by ID
 ///
@@ -561,17 +605,19 @@ pub async fn create_post(
     }
 }
 
-/// Get posts by board
+/// Get posts by board with pagination
 ///
-/// Returns all posts for a specific board
+/// Returns paginated posts for a specific board using ScyllaDB native pagination
 #[utoipa::path(
     get,
     path = "/boards/{board_id}/posts",
     params(
-        ("board_id" = uuid::Uuid, Path, description = "Board ID")
+        ("board_id" = uuid::Uuid, Path, description = "Board ID"),
+        ("page" = Option<u32>, Query, description = "Page number (starts at 1)", example = 1),
+        ("limit" = Option<u32>, Query, description = "Number of items per page", example = 10)
     ),
     responses(
-        (status = 200, description = "Posts retrieved successfully", body = Vec<Post>),
+        (status = 200, description = "Paginated posts retrieved successfully", body = PaginatedResponse<Post>),
         (status = 500, description = "Internal server error")
     )
 )]
@@ -580,29 +626,21 @@ pub async fn create_post(
 pub async fn get_posts_by_board(
     session: web::Data<Arc<Session>>,
     path: web::Path<Uuid>,
+    pagination: Query<PaginationParams>,
 ) -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
     REQUEST_COUNTER.get().unwrap().inc();
     
     let board_id = path.into_inner();
-    
-    // Check cache first
-    let posts_cache_key = board_id.to_string();
-    if let Some(cached_posts) = POSTS_CACHE.get().unwrap().read().await.get(&posts_cache_key) {
-        if !cached_posts.is_expired() {
-            info!("Cache hit for posts by board ID: {}", board_id);
-            return HttpResponse::Ok().json(cached_posts.get_data());
-        } else {
-            info!("Cache expired for posts by board ID: {}, fetching fresh data", board_id);
-        }
-    } else {
-        info!("No cache entry for posts by board ID: {}, fetching data", board_id);
-    }
-    
+    let page = pagination.page.max(1); // Ensure page >= 1
+    let limit = pagination.limit.max(1).min(100); // Ensure 1 <= limit <= 100
+
+    info!("Fetching posts for board {} (page: {}, limit: {})", board_id, page, limit);
     let start = Instant::now();
-    
-    let prepared = match session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE board_id = ? ALLOW FILTERING").await {
-        Ok(p) => p,
+
+    // Prepare statement with page size for efficient pagination
+    let mut prepared = match session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE board_id = ? ALLOW FILTERING").await {
+        Ok(stmt) => stmt,
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
             HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
@@ -610,65 +648,114 @@ pub async fn get_posts_by_board(
         }
     };
     
+    // Set page size for efficient pagination
+    prepared.set_page_size(limit as i32);
+
     DB_REQUEST_COUNTER.get().unwrap().inc();
-    let result = session.execute(&prepared, (board_id,)).await;
     
+    // Use execute_iter for paginated results
+    let row_iterator = match session.execute_iter(prepared, (board_id,)).await {
+        Ok(iterator) => iterator,
+        Err(e) => {
+            let duration = start.elapsed().as_secs_f64();
+            HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+            return HttpResponse::InternalServerError().body(format!("Error executing query: {}", e));
+        }
+    };
+
+    let mut posts = Vec::new();
+    let mut total_fetched = 0u32;
+
+    // Skip to the requested page
+    let skip_count = (page - 1) * limit;
+    let mut skipped = 0u32;
+
+    // Convert iterator to stream and iterate through pages
+    let mut rows_stream = row_iterator.into_typed::<(uuid::Uuid, uuid::Uuid, String, String, String, i64, i64)>();
+    
+    while let Some(next_row_res) = rows_stream.next().await {
+        match next_row_res {
+            Ok((id, board_id, title, content, author, created_at_millis, updated_at_millis)) => {
+                // Skip rows until we reach the desired page
+                if skipped < skip_count {
+                    skipped += 1;
+                    continue;
+                }
+                
+                // Stop if we have enough items for this page
+                if total_fetched >= limit {
+                    break;
+                }
+
+                // Convert timestamps
+                let created_at = match Utc.timestamp_millis_opt(created_at_millis).single() {
+                    Some(dt) => dt,
+                    None => {
+                        warn!("Invalid created_at timestamp for post {}: {}", id, created_at_millis);
+                        continue;
+                    }
+                };
+                
+                let updated_at = match Utc.timestamp_millis_opt(updated_at_millis).single() {
+                    Some(dt) => dt,
+                    None => {
+                        warn!("Invalid updated_at timestamp for post {}: {}", id, updated_at_millis);
+                        continue;
+                    }
+                };
+
+                posts.push(Post {
+                    id,
+                    board_id,
+                    title,
+                    content,
+                    author,
+                    created_at,
+                    updated_at,
+                });
+
+                total_fetched += 1;
+            },
+            Err(e) => {
+                error!("Error reading row: {}", e);
+                let duration = start.elapsed().as_secs_f64();
+                HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+                return HttpResponse::InternalServerError().body(format!("Error reading row: {}", e));
+            }
+        }
+    }
+
+    // Sort posts by created_at in descending order (newest first)
+    posts.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+
     let duration = start.elapsed();
     HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
+
+    // For pagination metadata, we'll estimate total pages
+    // In a production system, you might want to maintain a separate count
+    let has_more = total_fetched == limit; // If we got a full page, there might be more
     
-    match result {
-        Ok(rows) => {
-            let posts: Vec<Post> = rows
-                .rows
-                .unwrap_or_default()
-                .into_iter()
-                .filter_map(|row| {
-                    let id = row.columns[0].as_ref()?.as_uuid()?;
-                    let board_id = row.columns[1].as_ref()?.as_uuid()?;
-                    let title = row.columns[2].as_ref()?.as_text()?.to_string();
-                    let content = row.columns[3].as_ref()?.as_text()?.to_string();
-                    let author = row.columns[4].as_ref()?.as_text()?.to_string();
-                    
-                    // Handle bigint timestamps from database
-                    let created_at = if let Some(millis) = row.columns[5].as_ref().and_then(|c| c.as_bigint()) {
-                        Utc.timestamp_millis_opt(millis).single()?
-                    } else {
-                        return None;
-                    };
+    let meta = PaginationMeta {
+        page,
+        limit,
+        total: None, // We don't have exact total count without additional query
+        total_pages: if has_more { None } else { Some(page) }, // If no more data, current page is last
+    };
 
-                    let updated_at = if let Some(millis) = row.columns[6].as_ref().and_then(|c| c.as_bigint()) {
-                        Utc.timestamp_millis_opt(millis).single()?
-                    } else {
-                        return None;
-                    };
+    let response = PaginatedResponse {
+        meta,
+        data: posts,
+    };
 
-                    Some(Post {
-                        id,
-                        board_id,
-                        title,
-                        content,
-                        created_at,
-                        updated_at,
-                        author,
-                    })
-                })
-                .collect();
-
-            // Sort posts by created_at in descending order (newest first)
-            let mut posts = posts;
-            posts.sort_by(|a, b| b.created_at.cmp(&a.created_at));
-
-            // Update cache
-            let cache_entry = CacheEntry::new(posts.clone(), Duration::from_secs(300)); // 5 minutes TTL
-            POSTS_CACHE.get().unwrap().write().await.insert(posts_cache_key, cache_entry);
-
-            HttpResponse::Ok()
-                .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
-                .json(posts)
-        }
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error fetching posts: {}", e)),
-    }
+    info!("Successfully fetched {} posts for board {} (page: {}, limit: {}, duration: {}ms)", response.data.len(), board_id, page, limit, duration.as_millis());
+    HttpResponse::Ok()
+        .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
+        .append_header(("X-Has-More", has_more.to_string()))
+        .json(response)
 }
+
+
+
 
 /// Get post by ID
 ///
@@ -872,17 +959,19 @@ pub async fn create_comment(
     }
 }
 
-/// Get comments by post
+/// Get comments by post with pagination
 ///
-/// Returns all comments for a specific post
+/// Returns paginated comments for a specific post using ScyllaDB native pagination
 #[utoipa::path(
     get,
     path = "/posts/{post_id}/comments",
     params(
-        ("post_id" = uuid::Uuid, Path, description = "Post ID")
+        ("post_id" = uuid::Uuid, Path, description = "Post ID"),
+        ("page" = Option<u32>, Query, description = "Page number (starts at 1)", example = 1),
+        ("limit" = Option<u32>, Query, description = "Number of items per page", example = 10)
     ),
     responses(
-        (status = 200, description = "Comments retrieved successfully", body = Vec<Comment>),
+        (status = 200, description = "Paginated comments retrieved successfully", body = PaginatedResponse<Comment>),
         (status = 500, description = "Internal server error")
     )
 )]
@@ -891,16 +980,21 @@ pub async fn create_comment(
 pub async fn get_comments_by_post(
     session: web::Data<Arc<Session>>,
     path: web::Path<Uuid>,
+    pagination: Query<PaginationParams>,
 ) -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
-    
     let start = Instant::now();
     REQUEST_COUNTER.get().unwrap().inc();
     
     let post_id = path.into_inner();
-    
-    let prepared = match session.prepare("SELECT id, post_id, content, author, created_at FROM comments WHERE post_id = ? ALLOW FILTERING").await {
-        Ok(p) => p,
+    let page = pagination.page.max(1); // Ensure page >= 1
+    let limit = pagination.limit.max(1).min(100); // Ensure 1 <= limit <= 100
+
+    info!("Fetching comments for post {} (page: {}, limit: {})", post_id, page, limit);
+
+    // Prepare statement with page size for efficient pagination
+    let mut prepared = match session.prepare("SELECT id, post_id, content, author, created_at FROM comments WHERE post_id = ? ALLOW FILTERING").await {
+        Ok(stmt) => stmt,
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
             HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
@@ -908,52 +1002,102 @@ pub async fn get_comments_by_post(
         }
     };
     
+    // Set page size for efficient pagination
+    prepared.set_page_size(limit as i32);
+
     DB_REQUEST_COUNTER.get().unwrap().inc();
-    let result = session.execute(&prepared, (post_id,)).await;
     
+    // Use execute_iter for paginated results
+    let row_iterator = match session.execute_iter(prepared, (post_id,)).await {
+        Ok(iterator) => iterator,
+        Err(e) => {
+            let duration = start.elapsed().as_secs_f64();
+            HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+            return HttpResponse::InternalServerError().body(format!("Error executing query: {}", e));
+        }
+    };
+
+    let mut comments = Vec::new();
+    let mut total_fetched = 0u32;
+
+    // Skip to the requested page
+    let skip_count = (page - 1) * limit;
+    let mut skipped = 0u32;
+
+    // Convert iterator to stream and iterate through pages
+    let mut rows_stream = row_iterator.into_typed::<(uuid::Uuid, uuid::Uuid, String, String, i64)>();
+    
+    while let Some(next_row_res) = rows_stream.next().await {
+        match next_row_res {
+            Ok((id, post_id, content, author, created_at_millis)) => {
+                // Skip rows until we reach the desired page
+                if skipped < skip_count {
+                    skipped += 1;
+                    continue;
+                }
+                
+                // Stop if we have enough items for this page
+                if total_fetched >= limit {
+                    break;
+                }
+
+                // Convert timestamp
+                let created_at = match Utc.timestamp_millis_opt(created_at_millis).single() {
+                    Some(dt) => dt,
+                    None => {
+                        warn!("Invalid timestamp for comment {}: {}", id, created_at_millis);
+                        continue;
+                    }
+                };
+
+                comments.push(Comment {
+                    id,
+                    post_id,
+                    content,
+                    author,
+                    created_at,
+                });
+
+                total_fetched += 1;
+            },
+            Err(e) => {
+                error!("Error reading row: {}", e);
+                let duration = start.elapsed().as_secs_f64();
+                HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+                return HttpResponse::InternalServerError().body(format!("Error reading row: {}", e));
+            }
+        }
+    }
+
+    // Sort comments by created_at in ascending order (oldest first)
+    comments.sort_by(|a, b| a.created_at.cmp(&b.created_at));
+
     let duration = start.elapsed();
     HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
+
+    // For pagination metadata, we'll estimate total pages
+    // In a production system, you might want to maintain a separate count
+    let has_more = total_fetched == limit; // If we got a full page, there might be more
     
-    match result {
-        Ok(rows) => {
-            let comments: Vec<Comment> = rows
-                .rows
-                .unwrap_or_default()
-                .into_iter()
-                .filter_map(|row| {
-                    let id = row.columns[0].as_ref()?.as_uuid()?;
-                    let post_id = row.columns[1].as_ref()?.as_uuid()?;
-                    let content = row.columns[2].as_ref()?.as_text()?.to_string();
-                    let author = row.columns[4].as_ref()?.as_text()?.to_string();
-                    
-                    // Handle bigint timestamps from database
-                    let created_at = if let Some(millis) = row.columns[3].as_ref().and_then(|c| c.as_bigint()) {
-                        Utc.timestamp_millis_opt(millis).single()?
-                    } else {
-                        return None;
-                    };
+    let meta = PaginationMeta {
+        page,
+        limit,
+        total: None, // We don't have exact total count without additional query
+        total_pages: if has_more { None } else { Some(page) }, // If no more data, current page is last
+    };
 
-                    Some(Comment {
-                        id,
-                        post_id,
-                        content,
-                        created_at,
-                        author,
-                    })
-                })
-                .collect();
+    let response = PaginatedResponse {
+        meta,
+        data: comments,
+    };
 
-            // Sort comments by created_at in ascending order (oldest first)
-            let mut comments = comments;
-            comments.sort_by(|a, b| a.created_at.cmp(&b.created_at));
-
-            HttpResponse::Ok()
-                .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
-                .json(comments)
-        }
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error fetching comments: {}", e)),
-    }
+    info!("Successfully fetched {} comments for post {} (page: {}, limit: {}, duration: {}ms)", response.data.len(), post_id, page, limit, duration.as_millis());
+    HttpResponse::Ok()
+        .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
+        .append_header(("X-Has-More", has_more.to_string()))
+        .json(response)
 }
+
 
 /// Intentionally slow endpoint
 ///
@@ -978,4 +1122,5 @@ pub async fn slow_endpoint() -> impl Responder {
     info!("Slow endpoint completed");
     HttpResponse::Ok().body("This endpoint is intentionally slow")
 }
+
 
