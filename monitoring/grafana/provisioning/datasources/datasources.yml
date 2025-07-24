@@ -27,3 +27,13 @@ datasources:
     isDefault: false
     version: 1
     editable: false 
+
+  - name: scylla-datasource
+    type: scylladb-scylla-datasource
+    access: proxy
+    orgId: 1
+    isDefault: false
+    jsonData:
+      host: 'scylladb:9042'
+      datacenter: 'datacenter1'
+      keyspace: 'posts'

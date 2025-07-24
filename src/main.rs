@@ -15,7 +15,6 @@ mod db;
 mod models;
 mod routes;
 mod telemetry;
-mod tracing_middleware;
 
 #[get("/html-docs")]
 async fn html_docs() -> io::Result<NamedFile> {
@@ -59,7 +58,6 @@ async fn main() -> io::Result<()> {
         App::new()
             .app_data(web::Data::new(session.clone()))
             .wrap(Logger::default())
-            .wrap(tracing_middleware::TracingLogger)
             .wrap(Compress::default())
             // Serve Swagger UI at /docs
             .service(SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", openapi.clone()))

@@ -1,4 +1,4 @@
-.PHONY: help up down logs build rebuild check-monitoring test-load clean
+.PHONY: help up down logs build rebuild check-monitoring check-stack test-load clean
 
 # Default target
 help:
@@ -9,6 +9,7 @@ help:
 	@echo "  make build           - Build the application"
 	@echo "  make rebuild         - Full rebuild and restart"
 	@echo "  make check-monitoring - Validate monitoring stack"
+	@echo "  make check-stack     - Complete stack health check"
 	@echo "  make test-load       - Run load tests"
 	@echo "  make clean           - Clean up resources"
 
@@ -56,6 +57,10 @@ rebuild:
 # Validate monitoring stack
 check-monitoring:
 	cd tools && python3 check_all.py
+
+# Complete stack health check
+check-stack:
+	./check-stack.sh
 
 # Run load tests (requires Locust UI)
 test-load:

@@ -317,4 +317,171 @@ All monitoring and alerting configurations are defined as code in the following 
 - Alert rules: `monitoring/prometheus/rules.yml`
 - AlertManager configuration: `monitoring/alertmanager/config.yml`
 - Grafana dashboards: `monitoring/grafana/dashboards/`
-- Grafana provisioning: `monitoring/grafana/provisioning/` 
+- Grafana provisioning: `monitoring/grafana/provisioning/`
+
+# Web Forum with Scylla Monitoring Stack
+
+Современный форум на Rust с полным стеком мониторинга, включающим ScyllaDB, Prometheus, Grafana, Loki, Jaeger и Alertmanager.
+
+## 🚀 Быстрый старт
+
+```bash
+# 1. Установка ScyllaDB плагина для Grafana
+./setup-scylla-plugin.sh
+
+# 2. Запуск всех сервисов
+make up
+
+# 3. Проверка состояния мониторинга
+make check-monitoring
+```
+
+## 🔧 Исправленные проблемы
+
+### 1. ScyllaDB Мониторинг
+- ✅ Добавлен порт 9180 для метрик Prometheus
+- ✅ Исправлена конфигурация datasource для ScyllaDB
+- ✅ Настроен плагин scylladb-scylla-datasource
+- ✅ Добавлены правила Prometheus для ScyllaDB
+
+### 2. Логи в Drilldown
+- ✅ Улучшена конфигурация Promtail для сбора логов
+- ✅ Добавлены метки для контейнеров (app, component)
+- ✅ Исправлены селекторы в logs-dashboard.json
+- ✅ Оптимизирована конфигурация Loki
+
+### 3. Производительность Backend
+- ✅ Добавлено кэширование запросов
+- ✅ Реализованы prepared statements
+- ✅ Созданы индексы для быстрых запросов
+- ✅ Оптимизирован connection pool
+
+### 4. Графики в Scylla дашбордах
+- ✅ Исправлены пути к правилам Prometheus
+- ✅ Добавлена правильная конфигурация скрапинга метрик
+- ✅ Настроен datasource с правильными параметрами
+
+## 📊 Доступные сервисы
+
+После запуска доступны следующие интерфейсы:
+
+- **API Documentation**: http://localhost:8080/docs
+- **Grafana**: http://localhost:3000 (admin/admin)
+- **Prometheus**: http://localhost:9090
+- **Jaeger**: http://localhost:16686
+- **Load Testing**: http://localhost:8089
+- **Alertmanager**: http://localhost:9093
+
+## 🔍 Диагностика проблем
+
+### Проверка логов в Drilldown
+
+1. Откройте Grafana: http://localhost:3000
+2. Перейдите в Logs Dashboard
+3. Используйте следующие запросы:
+   ```logql
+   {job="containerlogs"} |= ""                    # Все логи
+   {app="forum"} |= ""                           # Логи приложения
+   {app="scylla"} |= ""                          # Логи ScyllaDB
+   {container_name=~".*forum.*"} |= ""           # По имени контейнера
+   ```
+
+### Проверка ScyllaDB метрик
+
+1. Откройте Prometheus: http://localhost:9090
+2. Проверьте targets: Status → Targets
+3. Убедитесь что `scylla` target в состоянии UP
+4. Попробуйте запросы:
+   ```promql
+   scylla_node_operation_mode
+   scylla_cql_requests_total
+   scylla_storage_proxy_coordinator_reads_total
+   ```
+
+### Проверка ScyllaDB дашбордов
+
+1. В Grafana перейдите к дашбордам в папке ver_2025.2/
+2. Проверьте:
+   - scylla-overview.2025.2.json
+   - scylla-detailed.2025.2.json
+   - scylla-cql.2025.2.json
+
+Если дашборды не показывают данные:
+1. Проверьте что ScyllaDB datasource работает
+2. Убедитесь что плагин установлен и загружен
+3. Проверьте соединение с ScyllaDB (должен быть доступен на scylladb:9042)
+
+## 🛠️ Команды для диагностики
+
+```bash
+# Проверка статуса всех сервисов
+docker-compose ps
+
+# Логи конкретного сервиса
+docker-compose logs grafana
+docker-compose logs prometheus
+docker-compose logs loki
+docker-compose logs scylladb
+
+# Проверка метрик ScyllaDB
+curl http://localhost:9180/metrics
+
+# Проверка конфигурации Prometheus
+curl http://localhost:9090/api/v1/targets
+
+# Перезапуск сервиса
+docker-compose restart grafana
+```
+
+## 🔧 Ручная настройка плагина ScyllaDB
+
+Если автоматическая установка не сработала:
+
+```bash
+# Скачать плагин вручную
+cd monitoring/grafana/plugins
+wget https://github.com/scylladb/grafana-scylla-datasource/archive/refs/heads/master.zip
+unzip master.zip
+mv grafana-scylla-datasource-master scylladb-scylla-datasource
+rm master.zip
+
+# Перезапустить Grafana
+docker-compose restart grafana
+```
+
+## 📈 Optimizations
+
+### Database
+- Indexes on frequently used fields (author, created_at, board_id, post_id)
+- Prepared statements for all queries
+- Connection pooling (8 connections per host)
+- Compression and compaction strategies
+
+### Application
+- In-memory caching with TTL
+- Performance metrics
+- Tracing for diagnostics
+- Resource limits in Docker
+
+### Monitoring
+- Retention policies for logs (7 days)
+- Optimized Loki configuration
+- Alerts for high load and errors
+- Jaeger for request tracing
+
+## ⚠️ Troubleshooting
+
+### Logs not showing in Grafana
+1. Check that Promtail is collecting logs: `docker-compose logs promtail`
+2. Ensure Loki is receiving data: `curl http://localhost:3100/ready`
+3. Check Loki datasource in Grafana
+
+### ScyllaDB dashboards are empty
+1. Install the plugin: `./setup-scylla-plugin.sh`
+2. Check that ScyllaDB is exposing metrics: `curl http://localhost:9180/metrics`
+3. Ensure Prometheus is scraping ScyllaDB: http://localhost:9090/targets
+
+### High resource consumption
+1. Reduce memory for ScyllaDB in docker-compose.yml
+2. Configure retention policies in Loki
+3. Limit the number of workers in the application

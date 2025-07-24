@@ -40,9 +40,10 @@ services:
     volumes:
       - ./scylla-data:/var/lib/scylla
     ports:
-      - "9042:9042"
-      - "9160:9160"
-      - "10000:10000"  # API port
+      - "9042:9042"    # CQL port
+      - "9160:9160"    # Thrift port
+      - "9180:9180"    # Prometheus metrics
+      - "10000:10000"  # REST API port
     networks:
       - forum-network
     deploy:
@@ -65,6 +66,7 @@ services:
       - "3100:3100"
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
+      - ./monitoring/loki:/etc/loki
       - loki-data:/loki
     networks:
       - forum-network
@@ -124,6 +126,7 @@ services:
       - ./monitoring/grafana/plugins:/var/lib/grafana/plugins
       - grafana-data:/var/lib/grafana
     environment:
+      - GF_PLUGINS_ALLOW_LOADING_UNSIGNED_PLUGINS=scylladb-scylla-datasource
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false

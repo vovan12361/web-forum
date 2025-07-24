@@ -63,7 +63,7 @@ scrape_configs:
           expression: (?P<container_name>(?:[^|]*))\|
           source: tag
       - match:
-          selector: '{container_name=~".*backend.*"}'
+          selector: '{container_name=~".*forum.*"}'
           stages:
             - regex:
                 expression: '(?P<timestamp>\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d+Z)\s+(?P<level>\w+)\s+(?P<target>\S+):\s+(?P<message>.*)'
@@ -71,9 +71,16 @@ scrape_configs:
             - labels:
                 level:
                 target:
+                app: "forum"
             - timestamp:
                 format: RFC3339Nano
                 source: timestamp
+      - match:
+          selector: '{container_name=~".*scylla.*"}'
+          stages:
+            - labels:
+                app: "scylla"
+                component: "database"
       - output:
           source: message
 

@@ -68,5 +68,24 @@ pub async fn init_db(session: &Session) -> Result<(), Box<dyn std::error::Error>
         "CREATE INDEX IF NOT EXISTS comments_post_idx ON comments (post_id)", &[]
     ).await?;
 
+    // Add index on author for faster author-specific queries
+    session.query(
+        "CREATE INDEX IF NOT EXISTS posts_author_idx ON posts (author)", &[]
+    ).await?;
+
+    session.query(
+        "CREATE INDEX IF NOT EXISTS comments_author_idx ON comments (author)", &[]
+    ).await?;
+
+    // Add index on created_at for better time-based queries
+    session.query(
+        "CREATE INDEX IF NOT EXISTS posts_created_at_idx ON posts (created_at)", &[]
+    ).await?;
+
+    session.query(
+        "CREATE INDEX IF NOT EXISTS comments_created_at_idx ON comments (created_at)", &[]
+    ).await?;
+
+    println!("Database initialized successfully with optimized indexes");
     Ok(())
-} 
+}

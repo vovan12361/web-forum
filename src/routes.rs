@@ -2,11 +2,13 @@ use actix_web::{get, post, web, HttpResponse, Responder};
 use scylla::{Session, prepared_statement::PreparedStatement};
 use chrono::{TimeZone, Utc};
 use uuid::Uuid;
-use std::time::Instant;
+use std::time::{Instant, Duration};
 use std::sync::Arc;
 use prometheus::{Counter, Histogram, HistogramOpts, Registry, TextEncoder, Gauge, opts};
 use std::sync::OnceLock;
 use tracing::{info, warn, error, debug, instrument};
+use std::collections::HashMap;
+use tokio::sync::RwLock;
 
 use crate::models::{
     Board, CreateBoardRequest, 
@@ -14,6 +16,52 @@ use crate::models::{
     Comment, CreateCommentRequest,
     HealthResponse
 };
+
+// Cache structure for performance optimization
+#[derive(Clone)]
+pub struct CacheEntry<T> {
+    data: T,
+    timestamp: Instant,
+    ttl: Duration,
+}
+
+impl<T> CacheEntry<T> {
+    pub fn new(data: T, ttl: Duration) -> Self {
+        Self {
+            data,
+            timestamp: Instant::now(),
+            ttl,
+        }
+    }
+
+    pub fn is_expired(&self) -> bool {
+        self.timestamp.elapsed() > self.ttl
+    }
+
+    pub fn get_data(&self) -> &T {
+        &self.data
+    }
+}
+
+// In-memory cache for frequently accessed data
+pub type BoardsCache = Arc<RwLock<HashMap<String, CacheEntry<Vec<Board>>>>>;
+pub type PostsCache = Arc<RwLock<HashMap<Uuid, CacheEntry<Vec<Post>>>>>;
+
+// Prepared statements for better performance
+pub struct PreparedStatements {
+    pub get_boards: PreparedStatement,
+    pub get_board_by_id: PreparedStatement,
+    pub create_board: PreparedStatement,
+    pub get_posts_by_board: PreparedStatement,
+    pub get_post_by_id: PreparedStatement,
+    pub create_post: PreparedStatement,
+    pub get_comments_by_post: PreparedStatement,
+    pub create_comment: PreparedStatement,
+}
+
+static PREPARED_STATEMENTS: OnceLock<PreparedStatements> = OnceLock::new();
+static BOARDS_CACHE: OnceLock<BoardsCache> = OnceLock::new();
+static POSTS_CACHE: OnceLock<PostsCache> = OnceLock::new();
 
 // Prometheus metrics
 static METRICS_REGISTRY: OnceLock<Registry> = OnceLock::new();
@@ -60,24 +108,6 @@ fn init_metrics() -> &'static Registry {
     })
 }
 
-// Macro to track request metrics
-macro_rules! track_request {
-    ($block:expr) => {{
-        init_metrics(); // Ensure metrics are initialized
-        let start = Instant::now();
-        REQUEST_COUNTER.get().unwrap().inc();
-        ACTIVE_REQUESTS.get().unwrap().inc();
-        
-        let result = $block;
-        
-        let duration = start.elapsed();
-        HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
-        ACTIVE_REQUESTS.get().unwrap().dec();
-        
-        result
-    }};
-}
-
 // Health check endpoint
 /// Check API health
 ///
@@ -92,17 +122,18 @@ macro_rules! track_request {
 #[get("/health")]
 #[instrument(name = "health_check", skip_all)]
 pub async fn health_check() -> impl Responder {
-    track_request!({
-        debug!("Health check requested");
-        let response = HealthResponse {
-            status: "OK".to_string(),
-            version: env!("CARGO_PKG_VERSION").to_string(),
-            timestamp: Utc::now(),
-        };
-        
-        info!("Health check successful");
-        HttpResponse::Ok().json(response)
-    })
+    init_metrics(); // Ensure metrics are initialized
+    REQUEST_COUNTER.get().unwrap().inc();
+    
+    debug!("Health check requested");
+    let response = HealthResponse {
+        status: "OK".to_string(),
+        version: env!("CARGO_PKG_VERSION").to_string(),
+        timestamp: Utc::now(),
+    };
+    
+    info!("Health check successful");
+    HttpResponse::Ok().json(response)
 }
 
 // Metrics endpoint for Prometheus
@@ -139,43 +170,24 @@ pub async fn metrics() -> impl Responder {
     }
 }
 
-// Prepared statements for better performance
-static GET_BOARDS_STMT: OnceLock<PreparedStatement> = OnceLock::new();
-static GET_BOARD_STMT: OnceLock<PreparedStatement> = OnceLock::new();
-static CREATE_BOARD_STMT: OnceLock<PreparedStatement> = OnceLock::new();
-static GET_POSTS_BY_BOARD_STMT: OnceLock<PreparedStatement> = OnceLock::new();
-static GET_POST_STMT: OnceLock<PreparedStatement> = OnceLock::new();
-static CREATE_POST_STMT: OnceLock<PreparedStatement> = OnceLock::new();
-static GET_COMMENTS_BY_POST_STMT: OnceLock<PreparedStatement> = OnceLock::new();
-static CREATE_COMMENT_STMT: OnceLock<PreparedStatement> = OnceLock::new();
-
 // Function to initialize prepared statements
 pub async fn init_prepared_statements(session: &Session) -> Result<(), Box<dyn std::error::Error>> {
-    // Prepare board statements
-    let boards_get_stmt = session.prepare("SELECT id, name, description, created_at FROM boards").await?;
-    let board_get_stmt = session.prepare("SELECT id, name, description, created_at FROM boards WHERE id = ?").await?;
-    let board_create_stmt = session.prepare("INSERT INTO boards (id, name, description, created_at) VALUES (?, ?, ?, ?)").await?;
+    let prepared = PreparedStatements {
+        get_boards: session.prepare("SELECT id, name, description, created_at FROM boards").await?,
+        get_board_by_id: session.prepare("SELECT id, name, description, created_at FROM boards WHERE id = ?").await?,
+        create_board: session.prepare("INSERT INTO boards (id, name, description, created_at) VALUES (?, ?, ?, ?)").await?,
+        get_posts_by_board: session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE board_id = ? ORDER BY created_at DESC").await?,
+        get_post_by_id: session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE id = ?").await?,
+        create_post: session.prepare("INSERT INTO posts (id, board_id, title, content, author, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)").await?,
+        get_comments_by_post: session.prepare("SELECT id, post_id, content, author, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC").await?,
+        create_comment: session.prepare("INSERT INTO comments (id, post_id, content, author, created_at) VALUES (?, ?, ?, ?, ?)").await?,
+    };
     
-    // Prepare post statements
-    let posts_by_board_get_stmt = session.prepare("SELECT id, board_id, title, content, created_at, author FROM posts WHERE board_id = ?").await?;
-    let post_get_stmt = session.prepare("SELECT id, board_id, title, content, created_at, author FROM posts WHERE id = ?").await?;
-    let post_create_stmt = session.prepare("INSERT INTO posts (id, board_id, title, content, created_at, author) VALUES (?, ?, ?, ?, ?, ?)").await?;
+    PREPARED_STATEMENTS.set(prepared).map_err(|_| "Failed to set prepared statements")?;
+    BOARDS_CACHE.set(Arc::new(RwLock::new(HashMap::new()))).map_err(|_| "Failed to set boards cache")?;
+    POSTS_CACHE.set(Arc::new(RwLock::new(HashMap::new()))).map_err(|_| "Failed to set posts cache")?;
     
-    // Prepare comment statements
-    let comments_by_post_get_stmt = session.prepare("SELECT id, post_id, content, created_at, author FROM comments WHERE post_id = ?").await?;
-    let comment_create_stmt = session.prepare("INSERT INTO comments (id, post_id, content, created_at, author) VALUES (?, ?, ?, ?, ?)").await?;
-    
-    // Set prepared statements
-    GET_BOARDS_STMT.set(boards_get_stmt).map_err(|_| "Failed to set GET_BOARDS_STMT")?;
-    GET_BOARD_STMT.set(board_get_stmt).map_err(|_| "Failed to set GET_BOARD_STMT")?;
-    CREATE_BOARD_STMT.set(board_create_stmt).map_err(|_| "Failed to set CREATE_BOARD_STMT")?;
-    GET_POSTS_BY_BOARD_STMT.set(posts_by_board_get_stmt).map_err(|_| "Failed to set GET_POSTS_BY_BOARD_STMT")?;
-    GET_POST_STMT.set(post_get_stmt).map_err(|_| "Failed to set GET_POST_STMT")?;
-    CREATE_POST_STMT.set(post_create_stmt).map_err(|_| "Failed to set CREATE_POST_STMT")?;
-    GET_COMMENTS_BY_POST_STMT.set(comments_by_post_get_stmt).map_err(|_| "Failed to set GET_COMMENTS_BY_POST_STMT")?;
-    CREATE_COMMENT_STMT.set(comment_create_stmt).map_err(|_| "Failed to set CREATE_COMMENT_STMT")?;
-    
-    info!("Prepared statements initialized successfully");
+    info!("Prepared statements and caches initialized successfully");
     Ok(())
 }
 
@@ -198,8 +210,10 @@ pub async fn create_board(
     session: web::Data<Arc<Session>>,
     board_data: web::Json<CreateBoardRequest>,
 ) -> impl Responder {
-    track_request!({
-        info!("Creating new board: {}", board_data.name);
+    init_metrics(); // Ensure metrics are initialized
+    REQUEST_COUNTER.get().unwrap().inc();
+    
+    info!("Creating new board: {}", board_data.name);
         
         let board = Board {
             id: Uuid::new_v4(),
@@ -237,7 +251,6 @@ pub async fn create_board(
                 HttpResponse::InternalServerError().body(format!("Error creating board: {}", e))
             },
         }
-    })
 }
 
 /// Get all boards
@@ -254,25 +267,39 @@ pub async fn create_board(
 #[get("/boards")]
 #[instrument(name = "get_boards", skip(session))]
 pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
-    track_request!({
-        info!("Fetching all boards");
-        
-        let start = Instant::now();
-        
-        // Use prepared statement for better performance
-        let result = if let Some(stmt) = GET_BOARDS_STMT.get() {
-            session.execute(stmt, &[]).await
+    init_metrics(); // Ensure metrics are initialized
+    REQUEST_COUNTER.get().unwrap().inc();
+    
+    info!("Fetching all boards");
+    
+    let start = Instant::now();
+    
+    // Check cache first
+    if let Some(cached_boards) = BOARDS_CACHE.get().unwrap().read().await.get("all_boards") {
+        if !cached_boards.is_expired() {
+            info!("Cache hit for all boards");
+            return HttpResponse::Ok().json(cached_boards.get_data());
         } else {
-            // Fallback to regular query if prepared statement not ready
-            warn!("Prepared statement not available, using regular query");
-            session.query("SELECT id, name, description, created_at FROM boards", &[]).await
-        };
-        
-        let duration = start.elapsed();
-        
-        DB_REQUEST_COUNTER.get().unwrap().inc();
-        
-        match result {
+            info!("Cache expired for all boards, fetching fresh data");
+        }
+    } else {
+        info!("No cache entry for all boards, fetching data");
+    }
+    
+    // Use prepared statement for better performance
+    let result = if let Some(stmt) = GET_BOARDS_STMT.get() {
+        session.execute(stmt, &[]).await
+    } else {
+        // Fallback to regular query if prepared statement not ready
+        warn!("Prepared statement not available, using regular query");
+        session.query("SELECT id, name, description, created_at FROM boards", &[]).await
+    };
+    
+    let duration = start.elapsed();
+    
+    DB_REQUEST_COUNTER.get().unwrap().inc();
+    
+    match result {
             Ok(rows) => {
                 let boards: Vec<Board> = rows
                     .rows
@@ -298,6 +325,12 @@ pub async fn get_boards(session: web::Data<Arc<Session>>) -> impl Responder {
                         })
                     })
                     .collect();
+
+                // Update cache
+                if let Some(mut cache) = BOARDS_CACHE.get().unwrap().write().await.get_mut("all_boards") {
+                    cache.data = boards.clone();
+                    cache.timestamp = Instant::now(); // Reset cache timestamp
+                }
 
                 info!("Successfully fetched {} boards (duration: {}ms)", boards.len(), duration.as_millis());
                 HttpResponse::Ok()
@@ -333,9 +366,23 @@ pub async fn get_board(
     session: web::Data<Arc<Session>>,
     path: web::Path<Uuid>,
 ) -> impl Responder {
-    track_request!({
-        let board_id = path.into_inner();
-        info!("Fetching board with ID: {}", board_id);
+    init_metrics(); // Ensure metrics are initialized
+    REQUEST_COUNTER.get().unwrap().inc();
+    
+    let board_id = path.into_inner();
+    info!("Fetching board with ID: {}", board_id);
+        
+        // Check cache first
+        if let Some(cached_board) = BOARDS_CACHE.get().unwrap().read().await.get(&board_id.to_string()) {
+            if !cached_board.is_expired() {
+                info!("Cache hit for board ID: {}", board_id);
+                return HttpResponse::Ok().json(cached_board.get_data());
+            } else {
+                info!("Cache expired for board ID: {}, fetching fresh data", board_id);
+            }
+        } else {
+            info!("No cache entry for board ID: {}, fetching data", board_id);
+        }
         
         // Use prepared statement for better performance
         let result = if let Some(stmt) = GET_BOARD_STMT.get() {
@@ -370,6 +417,12 @@ pub async fn get_board(
                             created_at,
                         };
                         
+                        // Update cache
+                        if let Some(mut cache) = BOARDS_CACHE.get().unwrap().write().await.get_mut(&board_id.to_string()) {
+                            cache.data = board.clone();
+                            cache.timestamp = Instant::now(); // Reset cache timestamp
+                        }
+
                         info!("Board found: {}", board.name);
                         return HttpResponse::Ok().json(board);
                     }
@@ -383,7 +436,6 @@ pub async fn get_board(
                 HttpResponse::InternalServerError().body(format!("Error fetching board: {}", e))
             },
         }
-    })
 }
 
 // Post related endpoints
@@ -461,7 +513,7 @@ pub async fn create_post(
     
     debug!("Generated post ID: {}", post.id);
     
-    let prepared = match session.prepare("INSERT INTO posts (id, board_id, title, content, created_at, author) VALUES (?, ?, ?, ?, ?, ?)").await {
+    let prepared = match session.prepare("INSERT INTO posts (id, board_id, title, content, author, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)").await {
         Ok(p) => {
             debug!("Post insert query prepared successfully");
             p
@@ -515,19 +567,32 @@ pub async fn create_post(
         (status = 500, description = "Internal server error")
     )
 )]
+#[instrument(name = "get_posts_by_board", skip(session), fields(board_id = %path))]
 #[get("/boards/{board_id}/posts")]
 pub async fn get_posts_by_board(
     session: web::Data<Arc<Session>>,
     path: web::Path<Uuid>,
 ) -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
-    
-    let start = Instant::now();
     REQUEST_COUNTER.get().unwrap().inc();
     
     let board_id = path.into_inner();
     
-    let prepared = match session.prepare("SELECT id, board_id, title, content, created_at, author FROM posts WHERE board_id = ? ALLOW FILTERING").await {
+    // Check cache first
+    if let Some(cached_posts) = POSTS_CACHE.get().unwrap().read().await.get(&board_id) {
+        if !cached_posts.is_expired() {
+            info!("Cache hit for posts by board ID: {}", board_id);
+            return HttpResponse::Ok().json(cached_posts.get_data());
+        } else {
+            info!("Cache expired for posts by board ID: {}, fetching fresh data", board_id);
+        }
+    } else {
+        info!("No cache entry for posts by board ID: {}, fetching data", board_id);
+    }
+    
+    let start = Instant::now();
+    
+    let prepared = match session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE board_id = ? ORDER BY created_at DESC ALLOW FILTERING").await {
         Ok(p) => p,
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
@@ -573,6 +638,12 @@ pub async fn get_posts_by_board(
                 })
                 .collect();
 
+            // Update cache
+            if let Some(mut cache) = POSTS_CACHE.get().unwrap().write().await.get_mut(&board_id) {
+                cache.data = posts.clone();
+                cache.timestamp = Instant::now(); // Reset cache timestamp
+            }
+
             HttpResponse::Ok()
                 .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
                 .json(posts)
@@ -596,6 +667,7 @@ pub async fn get_posts_by_board(
         (status = 500, description = "Internal server error")
     )
 )]
+#[instrument(name = "get_post", skip(session), fields(post_id = %path))]
 #[get("/posts/{post_id}")]
 pub async fn get_post(
     session: web::Data<Arc<Session>>,
@@ -608,7 +680,19 @@ pub async fn get_post(
     
     let post_id = path.into_inner();
     
-    let prepared = match session.prepare("SELECT id, board_id, title, content, created_at, author FROM posts WHERE id = ?").await {
+    // Check cache first
+    if let Some(cached_post) = POSTS_CACHE.get().unwrap().read().await.get(&post_id) {
+        if !cached_post.is_expired() {
+            info!("Cache hit for post ID: {}", post_id);
+            return HttpResponse::Ok().json(cached_post.get_data());
+        } else {
+            info!("Cache expired for post ID: {}, fetching fresh data", post_id);
+        }
+    } else {
+        info!("No cache entry for post ID: {}, fetching data", post_id);
+    }
+    
+    let prepared = match session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE id = ?").await {
         Ok(p) => p,
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
@@ -652,6 +736,12 @@ pub async fn get_post(
                             author: author.to_string(),
                         };
                         
+                        // Update cache
+                        if let Some(mut cache) = POSTS_CACHE.get().unwrap().write().await.get_mut(&post_id) {
+                            cache.data = post.clone();
+                            cache.timestamp = Instant::now(); // Reset cache timestamp
+                        }
+
                         return HttpResponse::Ok()
                             .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
                             .json(post);
@@ -680,6 +770,7 @@ pub async fn get_post(
         (status = 500, description = "Internal server error")
     )
 )]
+#[instrument(name = "create_comment", skip(session), fields(post_id = %comment_data.post_id, author = %comment_data.author))]
 #[post("/comments")]
 pub async fn create_comment(
     session: web::Data<Arc<Session>>,
@@ -726,7 +817,7 @@ pub async fn create_comment(
         author: comment_data.author.clone(),
     };
     
-    let prepared = match session.prepare("INSERT INTO comments (id, post_id, content, created_at, author) VALUES (?, ?, ?, ?, ?)").await {
+    let prepared = match session.prepare("INSERT INTO comments (id, post_id, content, author, created_at) VALUES (?, ?, ?, ?, ?)").await {
         Ok(p) => p,
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
@@ -769,6 +860,7 @@ pub async fn create_comment(
         (status = 500, description = "Internal server error")
     )
 )]
+#[instrument(name = "get_comments_by_post", skip(session), fields(post_id = %path))]
 #[get("/posts/{post_id}/comments")]
 pub async fn get_comments_by_post(
     session: web::Data<Arc<Session>>,
@@ -781,7 +873,7 @@ pub async fn get_comments_by_post(
     
     let post_id = path.into_inner();
     
-    let prepared = match session.prepare("SELECT id, post_id, content, created_at, author FROM comments WHERE post_id = ? ALLOW FILTERING").await {
+    let prepared = match session.prepare("SELECT id, post_id, content, author, created_at FROM comments WHERE post_id = ? ORDER BY created_at ASC ALLOW FILTERING").await {
         Ok(p) => p,
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
@@ -846,12 +938,13 @@ pub async fn get_comments_by_post(
 #[get("/slow")]
 #[instrument(name = "slow_endpoint")]
 pub async fn slow_endpoint() -> impl Responder {
-    track_request!({
-        warn!("Slow endpoint called - simulating 600ms delay");
-        // Simulate slow processing
-        tokio::time::sleep(tokio::time::Duration::from_millis(600)).await;
-        
-        info!("Slow endpoint completed");
-        HttpResponse::Ok().body("This endpoint is intentionally slow")
-    })
+    init_metrics(); // Ensure metrics are initialized
+    REQUEST_COUNTER.get().unwrap().inc();
+    
+    warn!("Slow endpoint called - simulating 600ms delay");
+    // Simulate slow processing
+    tokio::time::sleep(tokio::time::Duration::from_millis(600)).await;
+    
+    info!("Slow endpoint completed");
+    HttpResponse::Ok().body("This endpoint is intentionally slow")
 }

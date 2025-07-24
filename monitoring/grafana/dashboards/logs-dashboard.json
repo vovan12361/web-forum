@@ -45,8 +45,29 @@
       },
       "targets": [
         {
-          "expr": "{job=\"containerlogs\", container_name=~\".*backend.*\"}",
-          "refId": "A"
+          "expr": "{job=\"containerlogs\"} |= \"\"",
+          "refId": "A",
+          "legendFormat": "All Logs"
+        },
+        {
+          "expr": "{job=\"containerlogs\", container_name=~\".*forum.*\"} |= \"\"",
+          "refId": "B",
+          "legendFormat": "Forum App"
+        },
+        {
+          "expr": "{job=\"containerlogs\", container_name=~\".*scylla.*\"} |= \"\"",
+          "refId": "C",
+          "legendFormat": "ScyllaDB"
+        },
+        {
+          "expr": "{app=\"forum\"} |= \"\"",
+          "refId": "D",
+          "legendFormat": "Forum Application Logs"
+        },
+        {
+          "expr": "{app=\"scylla\"} |= \"\"",
+          "refId": "E",
+          "legendFormat": "ScyllaDB Logs"
         }
       ],
       "title": "Forum API Logs",
