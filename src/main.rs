@@ -1,4 +1,3 @@
-
 use actix_web::{web, App, HttpServer, middleware::Logger};
 use actix_web::middleware::Compress;
 use actix_web::get;
@@ -15,10 +14,11 @@ mod db;
 mod models;
 mod routes;
 mod telemetry;
+mod tracing_middleware;
 
 #[get("/html-docs")]
 async fn html_docs() -> io::Result<NamedFile> {
-    NamedFile::open("./static/docs.html")
+    NamedFile::open("/app/static/docs.html")
 }
 
 #[actix_web::main]
@@ -57,6 +57,7 @@ async fn main() -> io::Result<()> {
     let server = HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(session.clone()))
+            .wrap(tracing_middleware::TracingLogger) // Add distributed tracing middleware first
             .wrap(Logger::default())
             .wrap(Compress::default())
             // Serve Swagger UI at /docs

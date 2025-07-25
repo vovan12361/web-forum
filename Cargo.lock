@@ -431,6 +431,7 @@ dependencies = [
  "actix-web",
  "actix-web-prom",
  "anyhow",
+ "base64 0.22.1",
  "chrono",
  "env_logger",
  "futures",

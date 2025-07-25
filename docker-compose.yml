@@ -93,10 +93,16 @@ services:
       - ./load-test:/mnt/locust
     environment:
       - TARGET_HOST=http://app:8080
+      - JAEGER_OTLP_ENDPOINT=jaeger:4317
+      - OTEL_EXPORTER_OTLP_ENDPOINT=jaeger:4317
+      - OTEL_SERVICE_NAME=locust-load-test
+      - OTEL_SERVICE_VERSION=1.0.0
+      - OTEL_RESOURCE_ATTRIBUTES=deployment.environment=test
     networks:
       - forum-network
     depends_on:
       - app
+      - jaeger
 
   # Monitoring services
   prometheus:

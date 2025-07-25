@@ -1,0 +1,9 @@
+locust>=2.17.0
+opentelemetry-api>=1.20.0
+opentelemetry-sdk>=1.20.0
+opentelemetry-exporter-otlp-proto-grpc>=1.20.0
+opentelemetry-instrumentation-requests>=0.41b0
+opentelemetry-instrumentation-urllib3>=0.41b0
+protobuf>=4.24.0
+grpcio>=1.59.0
+requests>=2.31.0

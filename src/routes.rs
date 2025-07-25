@@ -7,7 +7,7 @@ use std::time::{Instant, Duration};
 use std::sync::Arc;
 use prometheus::{Counter, Histogram, HistogramOpts, Registry, TextEncoder, Gauge, opts};
 use std::sync::OnceLock;
-use tracing::{info, warn, error, debug, instrument};
+use tracing::{info, warn, error, debug};
 use std::collections::HashMap;
 use tokio::sync::RwLock;
 use crate::models::{
@@ -125,7 +125,7 @@ fn init_metrics() -> &'static Registry {
     )
 )]
 #[get("/health")]
-#[instrument(name = "health_check", skip_all)]
+ //  // #[instrument(name = "health_check", skip_all)]
 pub async fn health_check() -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
     REQUEST_COUNTER.get().unwrap().inc();
@@ -153,7 +153,7 @@ pub async fn health_check() -> impl Responder {
     )
 )]
 #[get("/metrics")]
-#[instrument(name = "metrics", skip_all)]
+ //  // #[instrument(name = "metrics", skip_all)]
 pub async fn metrics() -> impl Responder {
     debug!("Prometheus metrics requested");
     let registry = init_metrics();
@@ -182,7 +182,7 @@ pub async fn init_prepared_statements(session: &Session) -> Result<(), Box<dyn s
         get_board_by_id: session.prepare("SELECT id, name, description, created_at FROM boards WHERE id = ?").await?,
         create_board: session.prepare("INSERT INTO boards (id, name, description, created_at) VALUES (?, ?, ?, ?)").await?,
         get_posts_by_board: session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE board_id = ? ALLOW FILTERING").await?,
-        get_post_by_id: session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE id = ?").await?,
+        get_post_by_id: session.prepare("SELECT id, board_id, title, content, author, created_at, updated_at FROM posts WHERE id = ?  ").await?,
         create_post: session.prepare("INSERT INTO posts (id, board_id, title, content, author, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)").await?,
         get_comments_by_post: session.prepare("SELECT id, post_id, content, author, created_at FROM comments WHERE post_id = ? ALLOW FILTERING").await?,
         create_comment: session.prepare("INSERT INTO comments (id, post_id, content, author, created_at) VALUES (?, ?, ?, ?, ?)").await?,
@@ -215,7 +215,7 @@ pub async fn init_prepared_statements(session: &Session) -> Result<(), Box<dyn s
     )
 )]
 #[post("/boards")]
-#[instrument(name = "create_board", skip(session), fields(board_name = %board_data.name))]
+ //  // #[instrument(name = "create_board", skip(session), fields(board_name = %board_data.name))]
 pub async fn create_board(
     session: web::Data<Arc<Session>>,
     board_data: web::Json<CreateBoardRequest>,
@@ -279,7 +279,7 @@ pub async fn create_board(
     )
 )]
 #[get("/boards")]
-#[instrument(name = "get_boards", skip(session))]
+ //  // #[instrument(name = "get_boards", skip(session))]
 pub async fn get_boards(
     session: web::Data<Arc<Session>>,
     pagination: Query<PaginationParams>,
@@ -412,7 +412,7 @@ pub async fn get_boards(
     )
 )]
 #[get("/boards/{board_id}")]
-#[instrument(name = "get_board", skip(session), fields(board_id = %path))]
+ //  // #[instrument(name = "get_board", skip(session), fields(board_id = %path))]
 pub async fn get_board(
     session: web::Data<Arc<Session>>,
     path: web::Path<Uuid>,
@@ -503,7 +503,7 @@ pub async fn get_board(
     )
 )]
 #[post("/posts")]
-#[instrument(name = "create_post", skip(session), fields(board_id = %post_data.board_id, title = %post_data.title, author = %post_data.author))]
+ //  // #[instrument(name = "create_post", skip(session), fields(board_id = %post_data.board_id, title = %post_data.title, author = %post_data.author))]
 pub async fn create_post(
     session: web::Data<Arc<Session>>,
     post_data: web::Json<CreatePostRequest>,
@@ -621,7 +621,7 @@ pub async fn create_post(
         (status = 500, description = "Internal server error")
     )
 )]
-#[instrument(name = "get_posts_by_board", skip(session), fields(board_id = %path))]
+ //  // #[instrument(name = "get_posts_by_board", skip(session), fields(board_id = %path))]
 #[get("/boards/{board_id}/posts")]
 pub async fn get_posts_by_board(
     session: web::Data<Arc<Session>>,
@@ -772,7 +772,7 @@ pub async fn get_posts_by_board(
         (status = 500, description = "Internal server error")
     )
 )]
-#[instrument(name = "get_post", skip(session), fields(post_id = %path))]
+ //  // #[instrument(name = "get_post", skip(session), fields(post_id = %path))]
 #[get("/posts/{post_id}")]
 pub async fn get_post(
     session: web::Data<Arc<Session>>,
@@ -883,14 +883,16 @@ pub async fn get_post(
         (status = 500, description = "Internal server error")
     )
 )]
-#[instrument(name = "create_comment", skip(session), fields(post_id = %comment_data.post_id, author = %comment_data.author))]
+ //  // #[instrument(name = "create_comment", skip(session), fields(post_id = %comment_data.post_id, author = %comment_data.author))]
 #[post("/comments")]
 pub async fn create_comment(
     session: web::Data<Arc<Session>>,
     comment_data: web::Json<CreateCommentRequest>,
 ) -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
-    
+
+    info!("Creating comment for post_id: {}, author: {}", comment_data.post_id, comment_data.author);
+
     let start = Instant::now();
     REQUEST_COUNTER.get().unwrap().inc();
     
@@ -898,6 +900,7 @@ pub async fn create_comment(
     let post_check = match session.prepare("SELECT id FROM posts WHERE id = ?").await {
         Ok(p) => p,
         Err(e) => {
+            error!("Error preparing query: {}", e);
             let duration = start.elapsed().as_secs_f64();
             HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
             return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
@@ -912,12 +915,14 @@ pub async fn create_comment(
             if rows.rows.unwrap_or_default().is_empty() {
                 let duration = start.elapsed().as_secs_f64();
                 HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+                error!("Post with id {} not found", comment_data.post_id);
                 return HttpResponse::BadRequest().body(format!("Post with id {} not found", comment_data.post_id));
             }
         },
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
             HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+            error!("Error checking post: {}", e);
             return HttpResponse::InternalServerError().body(format!("Error checking post: {}", e));
         }
     }
@@ -935,6 +940,7 @@ pub async fn create_comment(
         Err(e) => {
             let duration = start.elapsed().as_secs_f64();
             HTTP_REQUEST_DURATION.get().unwrap().observe(duration);
+            error!("Error preparing query: {}", e);
             return HttpResponse::InternalServerError().body(format!("Error preparing query: {}", e));
         }
     };
@@ -944,7 +950,7 @@ pub async fn create_comment(
     let result = session
         .execute(
             &prepared,
-            (comment.id, comment.post_id, &comment.content, comment.created_at.timestamp_millis(), &comment.author),
+            (comment.id, comment.post_id, &comment.content, &comment.author, comment.created_at.timestamp_millis()),
         )
         .await;
 
@@ -955,7 +961,10 @@ pub async fn create_comment(
         Ok(_) => HttpResponse::Created()
             .append_header(("X-Processing-Time-Ms", duration.as_millis().to_string()))
             .json(comment),
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error creating comment: {}", e)),
+        Err(e) => {
+            error!("Error creating comment: {}", e);
+            HttpResponse::InternalServerError().body(format!("Error creating comment: {}", e))
+        }
     }
 }
 
@@ -975,7 +984,7 @@ pub async fn create_comment(
         (status = 500, description = "Internal server error")
     )
 )]
-#[instrument(name = "get_comments_by_post", skip(session), fields(post_id = %path))]
+ //  // #[instrument(name = "get_comments_by_post", skip(session), fields(post_id = %path))]
 #[get("/posts/{post_id}/comments")]
 pub async fn get_comments_by_post(
     session: web::Data<Arc<Session>>,
@@ -1110,7 +1119,7 @@ pub async fn get_comments_by_post(
     )
 )]
 #[get("/slow")]
-#[instrument(name = "slow_endpoint")]
+ //  // #[instrument(name = "slow_endpoint")]
 pub async fn slow_endpoint() -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
     REQUEST_COUNTER.get().unwrap().inc();

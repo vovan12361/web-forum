@@ -131,18 +131,65 @@ The API documentation is available through Swagger UI at http://localhost:8080/d
 - `GET /metrics` - Prometheus metrics
 
 #### Boards
-- `GET /boards` - Get all boards
+- `GET /boards` - Get all boards (with mandatory pagination)
 - `POST /boards` - Create a new board
 - `GET /boards/{board_id}` - Get a specific board
 
 #### Posts
 - `POST /posts` - Create a new post
 - `GET /posts/{post_id}` - Get a specific post
-- `GET /boards/{board_id}/posts` - Get all posts for a board
+- `GET /boards/{board_id}/posts` - Get all posts for a board (with mandatory pagination)
 
 #### Comments
 - `POST /comments` - Create a new comment
-- `GET /posts/{post_id}/comments` - Get all comments for a post
+- `GET /posts/{post_id}/comments` - Get all comments for a post (with mandatory pagination)
+
+### Pagination
+
+The following endpoints implement mandatory pagination using ScyllaDB's native pagination capabilities:
+
+- `GET /boards`
+- `GET /boards/{board_id}/posts`
+- `GET /posts/{post_id}/comments`
+
+#### Pagination Parameters
+
+All paginated endpoints accept the following query parameters:
+
+- `page_size` (optional, default: 20) - Number of items per page (max: 100)
+- `page_state` (optional) - Base64-encoded pagination token for the next page
+
+#### Example Usage
+
+```bash
+# Get first page of boards (default page size: 20)
+curl "http://localhost:8080/boards"
+
+# Get first page with custom page size
+curl "http://localhost:8080/boards?page_size=10"
+
+# Get next page using page_state from previous response
+curl "http://localhost:8080/boards?page_size=10&page_state=eyJjcmVhdGVkX2F0IjoxNjg5..."
+
+# Get posts for a specific board with pagination
+curl "http://localhost:8080/boards/123e4567-e89b-12d3-a456-426614174000/posts?page_size=15"
+
+# Get comments for a specific post with pagination
+curl "http://localhost:8080/posts/123e4567-e89b-12d3-a456-426614174000/comments?page_size=25"
+```
+
+#### Pagination Response Format
+
+All paginated endpoints return responses in the following format:
+
+```json
+{
+  "data": [...],           // Array of items for the current page
+  "page_size": 20,         // Requested page size
+  "next_page_state": "...", // Token for next page (null if no more pages)
+  "has_more": true         // Boolean indicating if more pages exist
+}
+```
 
 #### Test Endpoint
 - `GET /slow` - Intentionally slow endpoint for testing alerts
