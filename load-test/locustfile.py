@@ -463,9 +463,22 @@ class ForumUser(HttpUser):
                 span.set_attribute("error", True)
                 span.set_attribute("error.message", "Request failed")
     
-    # @task(1)
-    # def trigger_slow_endpoint(self):
-    #     self.client.get("/slow")
+    @task(1)
+    def trigger_slow_endpoint(self):
+        with tracer.start_as_current_span("load_test.slow_endpoint") as span:
+            span.set_attribute("load_test.task", "trigger_slow_endpoint")
+            span.set_attribute("http.method", "GET")
+            span.set_attribute("http.url", f"{self.host}/slow")
+            
+            response = self.safe_request("GET", "/slow")
+            if response is not None:
+                span.set_attribute("http.status_code", response.status_code)
+                if response.status_code != 200:
+                    span.set_attribute("error", True)
+                    span.set_attribute("error.message", f"HTTP {response.status_code}")
+            else:
+                span.set_attribute("error", True)
+                span.set_attribute("error.message", "Request failed")
 
 class ForumViewerUser(HttpUser):
     """User that only reads content, doesn't create anything"""

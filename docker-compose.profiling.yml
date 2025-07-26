@@ -1,0 +1,131 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.profiling
+    ports:
+      - "8080:8080"
+    environment:
+      - SCYLLA_URI=scylladb:9042
+      - RUST_MIN_STACK=8388608
+      - RUST_LOG=info
+      - RUST_BACKTRACE=1
+    networks:
+      - forum-network
+    depends_on:
+      scylladb:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+    # Enable privileged mode for profiling tools
+    privileged: true
+    # Mount additional volumes for profiling
+    volumes:
+      - ./profiling:/app/profiling
+      - /sys/kernel/debug:/sys/kernel/debug:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    # Add capabilities for profiling
+    cap_add:
+      - SYS_ADMIN
+      - SYS_PTRACE
+      - IPC_LOCK
+    ulimits:
+      stack: 8388608
+    restart: unless-stopped
+    # Override kernel parameters for profiling
+    sysctls:
+      - kernel.perf_event_paranoid=-1
+
+  # Database (same as before)
+  scylladb:
+    image: scylladb/scylla:latest
+    container_name: scylla-profiling
+    command: >
+      --seeds=scylla-profiling
+      --smp=1
+      --memory=512M
+      --overprovisioned=1
+      --developer-mode=1
+    environment:
+      - SCYLLA_DEVELOPMENT=1
+    volumes:
+      - ./scylla-data-profiling:/var/lib/scylla
+    ports:
+      - "9042:9042"
+      - "9160:9160"
+      - "9180:9180"
+      - "10000:10000"
+    networks:
+      - forum-network
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+        reservations:
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # Jaeger for tracing (essential for performance analysis)
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    ports:
+      - "16686:16686"  # Web UI
+      - "4317:4317"    # OTLP gRPC
+      - "4318:4318"    # OTLP HTTP
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - LOG_LEVEL=debug
+    networks:
+      - forum-network
+
+  # Load testing for profiling
+  locust:
+    build:
+      context: ./load-test
+      dockerfile: Dockerfile
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./load-test:/mnt/locust
+    environment:
+      - TARGET_HOST=http://app:8080
+      - JAEGER_OTLP_ENDPOINT=http://jaeger:4317
+    networks:
+      - forum-network
+    depends_on:
+      - app
+      - jaeger
+
+  # Prometheus for metrics collection during profiling
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/build:/etc/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+      - "--web.enable-admin-api"
+    networks:
+      - forum-network
+
+networks:
+  forum-network:
+    driver: bridge
+
+volumes:
+  loki-data:
+  grafana-data:

@@ -1,0 +1,70 @@
+FROM rust:1.88-bookworm as chef
+
+RUN cargo install cargo-chef
+RUN cargo install flamegraph
+RUN cargo install cargo-profiler
+WORKDIR /app
+
+FROM chef as planner
+
+COPY Cargo.toml Cargo.lock ./
+COPY src/ ./src/
+RUN cargo chef prepare --recipe-path recipe.json
+
+FROM chef as builder
+
+COPY --from=planner /app/recipe.json recipe.json
+RUN cargo chef cook --release --recipe-path recipe.json
+
+COPY Cargo.toml Cargo.lock ./
+COPY src/ ./src/
+
+# Build with debug symbols for profiling
+RUN cargo build --profile profiling
+
+FROM debian:bookworm-slim
+
+# Install profiling tools
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    perf-tools-unstable \
+    linux-perf \
+    curl \
+    htop \
+    iotop \
+    strace \
+    tcpdump \
+    net-tools \
+    procps \
+    binutils \
+    file \
+    gdb \
+    elfutils \
+    libbfd-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install additional Rust profiling tools
+COPY --from=chef /usr/local/cargo/bin/flamegraph /usr/local/bin/
+COPY --from=chef /usr/local/cargo/bin/cargo-profiler /usr/local/bin/
+
+WORKDIR /app
+
+# Copy the binary with debug symbols
+COPY --from=builder /app/target/profiling/backend /usr/local/bin/backend
+COPY static/ ./static/
+
+# Create directory for profiling data
+RUN mkdir -p /app/profiling
+
+# Set environment variables for profiling
+ENV RUST_MIN_STACK=8388608
+ENV RUST_LOG=info
+ENV RUST_BACKTRACE=1
+# Enable frame pointers for better profiling
+ENV RUSTFLAGS="-C force-frame-pointers=yes"
+
+# Set perf permissions
+RUN echo 'kernel.perf_event_paranoid = -1' >> /etc/sysctl.conf
+RUN echo 'kernel.kptr_restrict = 0' >> /etc/sysctl.conf
+
+CMD ["backend"]

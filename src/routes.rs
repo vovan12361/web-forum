@@ -7,9 +7,10 @@ use std::time::{Instant, Duration};
 use std::sync::Arc;
 use prometheus::{Counter, Histogram, HistogramOpts, Registry, TextEncoder, Gauge, opts};
 use std::sync::OnceLock;
-use tracing::{info, warn, error, debug};
+use tracing::{info, warn, error, debug, instrument};
 use std::collections::HashMap;
 use tokio::sync::RwLock;
+use serde_json;
 use crate::models::{
     Board, CreateBoardRequest, 
     Post, CreatePostRequest, 
@@ -1108,28 +1109,160 @@ pub async fn get_comments_by_post(
 }
 
 
-/// Intentionally slow endpoint
+/// Intentionally slow endpoint with CPU-intensive operations
 ///
-/// This endpoint is intentionally slow to demonstrate alerts
+/// This endpoint is intentionally slow to demonstrate alerts and profiling
 #[utoipa::path(
     get,
     path = "/slow",
     responses(
-        (status = 200, description = "Slow endpoint response")
+        (status = 200, description = "Slow endpoint response with CPU profiling data")
     )
 )]
 #[get("/slow")]
- //  // #[instrument(name = "slow_endpoint")]
+#[instrument(name = "slow_endpoint")]
 pub async fn slow_endpoint() -> impl Responder {
     init_metrics(); // Ensure metrics are initialized
     REQUEST_COUNTER.get().unwrap().inc();
+    let start = Instant::now();
+
+    warn!("Slow endpoint called - starting CPU-intensive operations");
     
-    warn!("Slow endpoint called - simulating 600ms delay");
-    // Simulate slow processing
-    tokio::time::sleep(tokio::time::Duration::from_millis(600)).await;
+    // CPU-intensive computation in a blocking task
+    let cpu_result = tokio::task::spawn_blocking(|| {
+        info!("Starting CPU-intensive operations");
+        
+        // Multiple CPU-intensive operations
+        let prime_result = heavy_cpu_computation(5000);
+        let matrix_result = matrix_multiplication_result();
+        let fib_result = fibonacci_iterative(35);
+        
+        info!("CPU-intensive operations completed");
+        prime_result.wrapping_add(matrix_result).wrapping_add(fib_result)
+    }).await.unwrap_or(0);
     
-    info!("Slow endpoint completed");
-    HttpResponse::Ok().body("This endpoint is intentionally slow")
+    // Still include some async delay
+    tokio::time::sleep(tokio::time::Duration::from_millis(200)).await;
+    
+    let duration = start.elapsed();
+    HTTP_REQUEST_DURATION.get().unwrap().observe(duration.as_secs_f64());
+
+    info!("Slow endpoint completed with CPU result: {}, duration: {:?}", cpu_result, duration);
+    HttpResponse::Ok().json(serde_json::json!({
+        "message": "This endpoint is intentionally slow with CPU-intensive operations",
+        "cpu_computation_result": cpu_result,
+        "duration_ms": duration.as_millis(),
+        "operations_performed": [
+            "prime_number_calculation",
+            "matrix_multiplication", 
+            "fibonacci_calculation"
+        ]
+    }))
+}
+
+/// CPU-intensive mathematical computation for profiling
+/// This function will be easily visible in perf reports
+#[instrument(name = "heavy_cpu_computation")]
+fn heavy_cpu_computation(iterations: u64) -> u64 {
+    info!("Starting heavy CPU computation with {} iterations", iterations);
+    
+    let mut result = 0u64;
+    let mut temp_sum = 0u64;
+    
+    // Prime number calculation - CPU intensive
+    for i in 2..iterations {
+        if is_prime_slow(i) {
+            result = result.wrapping_add(i);
+            temp_sum = temp_sum.wrapping_add(i * i);
+        }
+    }
+    
+    // Additional mathematical operations
+    let final_result = fibonacci_iterative(30) + matrix_multiplication_result() + temp_sum;
+    
+    info!("Heavy CPU computation completed, result: {}", final_result);
+    final_result.wrapping_add(result)
+}
+
+/// Slow prime number check - intentionally inefficient for profiling
+#[instrument(name = "is_prime_slow")]
+fn is_prime_slow(n: u64) -> bool {
+    if n < 2 {
+        return false;
+    }
+    if n == 2 {
+        return true;
+    }
+    if n % 2 == 0 {
+        return false;
+    }
+    
+    // Intentionally slow algorithm - checking all odd numbers up to sqrt(n)
+    let limit = (n as f64).sqrt() as u64;
+    for i in (3..=limit).step_by(2) {
+        if n % i == 0 {
+            return false;
+        }
+    }
+    true
+}
+
+/// CPU-intensive Fibonacci calculation
+#[instrument(name = "fibonacci_iterative")]
+fn fibonacci_iterative(n: u32) -> u64 {
+    if n == 0 {
+        return 0;
+    }
+    if n == 1 {
+        return 1;
+    }
+    
+    let mut prev = 0u64;
+    let mut curr = 1u64;
+    
+    for _ in 2..=n {
+        let next = prev.wrapping_add(curr);
+        prev = curr;
+        curr = next;
+    }
+    
+    curr
+}
+
+/// Simulated matrix multiplication for CPU load
+#[instrument(name = "matrix_multiplication_result")]
+fn matrix_multiplication_result() -> u64 {
+    const SIZE: usize = 100;
+    let mut matrix_a = vec![vec![1u32; SIZE]; SIZE];
+    let mut matrix_b = vec![vec![2u32; SIZE]; SIZE];
+    let mut result = vec![vec![0u64; SIZE]; SIZE];
+    
+    // Initialize matrices with some pattern
+    for i in 0..SIZE {
+        for j in 0..SIZE {
+            matrix_a[i][j] = ((i + j) % 256) as u32;
+            matrix_b[i][j] = ((i * j) % 256) as u32;
+        }
+    }
+    
+    // Matrix multiplication
+    for i in 0..SIZE {
+        for j in 0..SIZE {
+            let mut sum = 0u64;
+            for k in 0..SIZE {
+                sum = sum.wrapping_add((matrix_a[i][k] as u64) * (matrix_b[k][j] as u64));
+            }
+            result[i][j] = sum;
+        }
+    }
+    
+    // Return sum of diagonal elements
+    let mut diagonal_sum = 0u64;
+    for i in 0..SIZE {
+        diagonal_sum = diagonal_sum.wrapping_add(result[i][i]);
+    }
+    
+    diagonal_sum
 }
 
 
