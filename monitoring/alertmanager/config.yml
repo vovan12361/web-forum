@@ -14,7 +14,7 @@ receivers:
 - name: 'telegram-notifications'
   telegram_configs:
   - bot_token: '${TELEGRAM_BOT_TOKEN}'
-    chat_id: '${TELEGRAM_CHAT_ID}'
+    chat_id: ${TELEGRAM_CHAT_ID}
     title: 'Forum API Alert'
     message: |
       Alert: {{ .GroupLabels.alertname }}

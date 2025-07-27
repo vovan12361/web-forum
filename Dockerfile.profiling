@@ -14,7 +14,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 FROM chef as builder
 
 COPY --from=planner /app/recipe.json recipe.json
-RUN cargo chef cook --release --recipe-path recipe.json
+RUN cargo chef cook --profile profiling --recipe-path recipe.json
 
 COPY Cargo.toml Cargo.lock ./
 COPY src/ ./src/

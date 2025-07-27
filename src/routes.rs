@@ -1087,7 +1087,7 @@ pub async fn slow_endpoint(
     let start = Instant::now();
 
     // костыль
-    tokio::time::sleep(tokio::time::Duration::from_millis(280)).await;
+    tokio::time::sleep(tokio::time::Duration::from_millis(300)).await;
 
     warn!("Slow endpoint called - starting CPU-intensive operations");
     update_memory_usage(&memory_gauge);

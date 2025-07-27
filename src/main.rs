@@ -19,9 +19,14 @@ mod routes;
 mod telemetry;
 mod tracing_middleware;
 
-#[get("/html-docs")]
+#[get("/docs")]
 async fn html_docs() -> io::Result<NamedFile> {
     NamedFile::open("/app/static/docs.html")
+}
+
+#[get("/docs/")]
+async fn html_docs_slash() -> io::Result<NamedFile> {
+    NamedFile::open("app/static/docs.html")
 }
 
 #[actix_web::main]
@@ -96,9 +101,10 @@ async fn main() -> io::Result<()> {
     prometheus.registry.register(Box::new(slow_endpoint_duration.clone())).unwrap();
 
     println!("Starting server at http://0.0.0.0:8080");
-    println!("API documentation available at http://0.0.0.0:8080/docs");
-    println!("Prometheus metrics available at http://0.0.0.0:8080/metrics");
-    println!("HTML documentation available at http://0.0.0.0:8080/html-docs");
+    println!("📚 Swagger API documentation: http://0.0.0.0:8080/swagger/");
+    println!("📄 Russian documentation: http://0.0.0.0:8080/docs");
+    println!("📊 Prometheus metrics: http://0.0.0.0:8080/metrics");
+    println!("🔍 Health check: http://0.0.0.0:8080/health");
     println!("actix-web-prom automatically tracks HTTP requests, duration, and status codes");
 
     // Generate OpenAPI documentation
@@ -117,10 +123,11 @@ async fn main() -> io::Result<()> {
             .wrap(tracing_middleware::TracingLogger) // Add distributed tracing middleware
             .wrap(Logger::default())
             .wrap(Compress::default())
-            // Serve Swagger UI at /docs
-            .service(SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", openapi.clone()))
+            // Serve Swagger UI at /swagger
+            .service(SwaggerUi::new("/swagger{_:.*}").url("/api-docs/openapi.json", openapi.clone()))
             // Serve HTML docs
             .service(html_docs)
+            .service(html_docs_slash)
             // Health endpoint (metrics endpoint is auto-registered by actix-web-prom at /metrics)
             .service(routes::health_check)
             // Board related endpoints
