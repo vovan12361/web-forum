@@ -74,54 +74,6 @@ services:
       timeout: 10s
       retries: 5
 
-  # Jaeger for tracing (essential for performance analysis)
-  jaeger:
-    image: jaegertracing/all-in-one:latest
-    ports:
-      - "16686:16686"  # Web UI
-      - "4317:4317"    # OTLP gRPC
-      - "4318:4318"    # OTLP HTTP
-    environment:
-      - COLLECTOR_OTLP_ENABLED=true
-      - LOG_LEVEL=debug
-    networks:
-      - forum-network
-
-  # Load testing for profiling
-  locust:
-    build:
-      context: ./load-test
-      dockerfile: Dockerfile
-    ports:
-      - "8089:8089"
-    volumes:
-      - ./load-test:/mnt/locust
-    environment:
-      - TARGET_HOST=http://app:8080
-      - JAEGER_OTLP_ENDPOINT=http://jaeger:4317
-    networks:
-      - forum-network
-    depends_on:
-      - app
-      - jaeger
-
-  # Prometheus for metrics collection during profiling
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./monitoring/prometheus/build:/etc/prometheus
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
-      - "--storage.tsdb.path=/prometheus"
-      - "--web.console.libraries=/etc/prometheus/console_libraries"
-      - "--web.console.templates=/etc/prometheus/consoles"
-      - "--web.enable-lifecycle"
-      - "--web.enable-admin-api"
-    networks:
-      - forum-network
-
 networks:
   forum-network:
     driver: bridge

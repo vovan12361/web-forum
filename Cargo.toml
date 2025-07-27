@@ -25,7 +25,7 @@ futures-util = "0.3.30"
 env_logger = "0.11.3"
 log = "0.4.21"
 prometheus = "0.13.4"
-actix-web-prom = "0.8.0"
+actix-web-prom = { version = "0.8.0", features = ["process"] }
 
 # OpenAPI/Swagger
 utoipa = { version = "4.2.0", features = ["actix_extras", "uuid", "chrono"] }
@@ -40,18 +40,13 @@ tracing-opentelemetry = "0.23.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 base64 = "0.22.1"
 
-# Profile configurations for better profiling
-[profile.release]
-debug = true  # Include debug symbols for profiling
-debug-assertions = false
-overflow-checks = false
-lto = false  # Disable LTO for better symbol resolution
-codegen-units = 1
-panic = "unwind"  # Better stack traces
-
 [profile.profiling]
 inherits = "release"
 debug = 2  # Full debug info
+debug-assertions = false
+overflow-checks = false
+codegen-units = 1
+panic = "unwind"  # Better stack traces
 lto = false
 codegen-units = 1
 incremental = false

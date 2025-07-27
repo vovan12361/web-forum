@@ -10,4 +10,14 @@ providers:
     updateIntervalSeconds: 10
     allowUiUpdates: true
     options:
-      path: /var/lib/grafana/dashboards 
+      path: /var/lib/grafana/dashboards
+  - name: 'Forum API 2025 Performance Dashboards'
+    orgId: 1
+    folder: 'Performance 2025'
+    folderUid: 'perf-2025'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 10
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards/ver_2025.2 

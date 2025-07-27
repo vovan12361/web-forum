@@ -59,7 +59,3 @@ pub fn init_telemetry() -> Result<sdktrace::Tracer, Box<dyn std::error::Error>> 
     println!("Tracing subscriber configured with OpenTelemetry layer");
     Ok(tracer)
 }
-
-pub fn shutdown_telemetry() {
-    global::shutdown_tracer_provider();
-}
